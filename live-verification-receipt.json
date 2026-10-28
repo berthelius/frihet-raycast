@@ -1,0 +1,307 @@
+{
+  "schemaVersion": 1,
+  "issue": "berthelius/frihet-distribution#10",
+  "verifiedAt": "2026-10-28T10:28:46.337Z",
+  "startedAt": "2026-10-28T10:28:13.861Z",
+  "apiBaseUrl": "https://api.frihet.io/v1",
+  "syntheticWorkspaceUid": "hnVCrCb9Pxf8BgLP0ijz84iuntt2",
+  "ephemeralCredentialCleanup": {
+    "ephemeralKeysRevokedCount": 2,
+    "revokedKeys": [
+      {
+        "label": "Profile-A",
+        "ephemeralKeyId": "repoBP33JWKmNyncITfR",
+        "redactedKeyPrefix": "fri_OI-j...[REDACTED]",
+        "deletedFromFirestore": true,
+        "postRevocationProbeUrl": "https://api.frihet.io/v1/context",
+        "postRevocationHttpStatus": 401
+      },
+      {
+        "label": "Profile-B",
+        "ephemeralKeyId": "1mG70w1Z2KuEOFYIgVSt",
+        "redactedKeyPrefix": "fri_JV4h...[REDACTED]",
+        "deletedFromFirestore": true,
+        "postRevocationProbeUrl": "https://api.frihet.io/v1/context",
+        "postRevocationHttpStatus": 401
+      }
+    ]
+  },
+  "flows": {
+    "flow1_connectionAndContext": {
+      "status": "PASSED",
+      "endpoint": "https://api.frihet.io/v1/context",
+      "workspaceName": "Frihet OpenAI Demo",
+      "currency": "EUR",
+      "fiscalZone": "canarias",
+      "planTier": "free",
+      "tenantNamespace": "29d5491ba5e24a1b"
+    },
+    "flow2_businessBriefMonetaryAndTemporalContract": {
+      "status": "PASSED",
+      "question": "¿Qué debería revisar hoy en mi negocio y por qué?",
+      "asOfDate": "2026-10-28",
+      "referenceMonth": "2026-10",
+      "temporalScope": "unfiltered_operational_sample_as_of_date",
+      "isPartial": false,
+      "resources": {
+        "invoices": {
+          "resource": "invoices",
+          "collection": "invoices",
+          "sourceTool": "list_invoices",
+          "inspected": 4,
+          "total": 4,
+          "complete": true
+        },
+        "quotes": {
+          "resource": "quotes",
+          "collection": "quotes",
+          "sourceTool": "list_quotes",
+          "inspected": 0,
+          "total": 0,
+          "complete": true
+        },
+        "expenses": {
+          "resource": "expenses",
+          "collection": "expenses",
+          "sourceTool": "list_expenses",
+          "inspected": 2,
+          "total": 2,
+          "complete": true
+        },
+        "clients": {
+          "resource": "clients",
+          "collection": "clients",
+          "sourceTool": "list_clients",
+          "inspected": 2,
+          "total": 2,
+          "complete": true
+        },
+        "client_activities": {
+          "resource": "client_activities",
+          "collection": "client_activities",
+          "sourceTool": "list_client_activities",
+          "inspected": 2,
+          "total": 2,
+          "complete": true
+        }
+      },
+      "draftActivity": {
+        "invoiceDraftsCount": 4,
+        "invoiceDraftsTotal": {
+          "amount": 4095,
+          "currency": "EUR",
+          "provenance": "derived_from_items",
+          "formula": "sum(stored doc.total/amount + canonical derived item totals)",
+          "fieldOrFormula": "sum(stored doc.total/amount + canonical derived item totals)",
+          "totalsByCurrency": {
+            "EUR": {
+              "amount": 4095,
+              "currency": "EUR",
+              "provenance": "derived_from_items",
+              "documentCount": 4
+            }
+          },
+          "unavailableCount": 0
+        },
+        "quoteDraftsCount": 0,
+        "quoteDraftsTotal": {
+          "amount": 0,
+          "currency": "EUR",
+          "provenance": "stored_field",
+          "formula": "sum(0 documents)",
+          "fieldOrFormula": "sum(0 documents)",
+          "totalsByCurrency": {},
+          "unavailableCount": 0
+        }
+      },
+      "issuedActivity": {
+        "realOutstandingBalanceDeterminable": false,
+        "unpaidNominalSemantics": "nominal_unpaid_invoice_totals_without_partial_payments",
+        "issuedInvoicesCount": 0,
+        "issuedInvoicesTotal": {
+          "amount": 0,
+          "currency": "EUR",
+          "provenance": "stored_field",
+          "formula": "sum(0 documents)",
+          "fieldOrFormula": "sum(0 documents)",
+          "totalsByCurrency": {},
+          "unavailableCount": 0
+        },
+        "paidInvoicesCount": 0,
+        "paidInvoicesTotal": {
+          "amount": 0,
+          "currency": "EUR",
+          "provenance": "stored_field",
+          "formula": "sum(0 documents)",
+          "fieldOrFormula": "sum(0 documents)",
+          "totalsByCurrency": {},
+          "unavailableCount": 0
+        },
+        "unpaidNominalInvoicesCount": 0,
+        "unpaidNominalTotal": {
+          "amount": 0,
+          "currency": "EUR",
+          "provenance": "stored_field",
+          "formula": "sum(0 documents)",
+          "fieldOrFormula": "sum(0 documents)",
+          "totalsByCurrency": {},
+          "unavailableCount": 0
+        },
+        "unpaidNominalTotalsByCurrency": {}
+      },
+      "recordedExpenses": {
+        "expensesCount": 2,
+        "expensesTotal": {
+          "amount": 166.99,
+          "currency": "EUR",
+          "provenance": "stored_field",
+          "formula": "sum(stored doc.total/amount)",
+          "fieldOrFormula": "sum(stored doc.total/amount)",
+          "totalsByCurrency": {
+            "EUR": {
+              "amount": 166.99,
+              "currency": "EUR",
+              "provenance": "stored_field",
+              "documentCount": 2
+            }
+          },
+          "unavailableCount": 0
+        },
+        "deductibleCount": 1,
+        "nonDeductibleCount": 1,
+        "pendingReviewCount": 0
+      },
+      "currentMonthActivity": {
+        "referenceMonth": "2026-10",
+        "note": "Subconjunto de documentos cuya fecha de emisión (issueDate) o fecha de gasto (date) pertenece explícitamente al mes 2026-10, separado de los registros de meses previos presentes en la muestra operativa.",
+        "issuedInvoicesInMonthCount": 0,
+        "issuedInvoicesInMonthTotal": {
+          "amount": 0,
+          "currency": "EUR",
+          "provenance": "stored_field",
+          "formula": "sum(0 documents)",
+          "fieldOrFormula": "sum(0 documents)",
+          "totalsByCurrency": {},
+          "unavailableCount": 0
+        },
+        "invoiceDraftsInMonthCount": 4,
+        "invoiceDraftsInMonthTotal": {
+          "amount": 4095,
+          "currency": "EUR",
+          "provenance": "derived_from_items",
+          "formula": "sum(stored doc.total/amount + canonical derived item totals)",
+          "fieldOrFormula": "sum(stored doc.total/amount + canonical derived item totals)",
+          "totalsByCurrency": {
+            "EUR": {
+              "amount": 4095,
+              "currency": "EUR",
+              "provenance": "derived_from_items",
+              "documentCount": 4
+            }
+          },
+          "unavailableCount": 0
+        },
+        "expensesInMonthCount": 1,
+        "expensesInMonthTotal": {
+          "amount": 121,
+          "currency": "EUR",
+          "provenance": "stored_field",
+          "formula": "sum(stored doc.total/amount)",
+          "fieldOrFormula": "sum(stored doc.total/amount)",
+          "totalsByCurrency": {
+            "EUR": {
+              "amount": 121,
+              "currency": "EUR",
+              "provenance": "stored_field",
+              "documentCount": 1
+            }
+          },
+          "unavailableCount": 0
+        }
+      },
+      "reviewItemsCount": 3,
+      "reviewCategories": [
+        "draft_invoice",
+        "tax_discrepancy",
+        "crm_followup"
+      ],
+      "mutationsExecuted": 0
+    },
+    "flow3_searchInvoicesClientsProductsAndDeepLinks": {
+      "status": "PASSED",
+      "invoices": {
+        "inspected": 4,
+        "total": 4,
+        "sampleIds": [
+          "0avUIazQWeadR9NIXNOu",
+          "UzxMlbbJ9PLLPcpRmF8y",
+          "Xzpy4RGYVdhSiByaHLvE",
+          "edeCSbfZtmpzx8q2S19s"
+        ],
+        "detailedInvoiceSample": {
+          "id": "0avUIazQWeadR9NIXNOu",
+          "invoiceNumber": "F20260004",
+          "status": "draft",
+          "clientName": "Acme SL",
+          "itemCount": 1
+        },
+        "openInFrihetUrl": "https://app.frihet.io/invoices"
+      },
+      "clients": {
+        "inspected": 2,
+        "total": 2,
+        "sampleNames": [
+          {
+            "id": "444IZvNpVrtJhj5nRySW",
+            "name": "Acme SL"
+          },
+          {
+            "id": "RCjuHqsCchF5ZCB7gU0s",
+            "name": "OpenAI Demo Sample Client"
+          }
+        ],
+        "openInFrihetUrl": "https://app.frihet.io/clients"
+      },
+      "products": {
+        "inspected": 3,
+        "total": 3,
+        "usedClientSideFallback": true,
+        "fallbackCoveragePartial": false,
+        "fallbackReason": "Server returned HTTP 500 on ?isActive=true; applied client-side filter preserving legacy products.",
+        "sampleProducts": [
+          {
+            "id": "EYd0ioEOZwMLAn30dxu6",
+            "name": "OpenAI Demo Annual Hosting",
+            "unitPrice": 240,
+            "isActive": true
+          },
+          {
+            "id": "GRO7SpqTTeMeky1sume9",
+            "name": "OpenAI Demo UX Design Hour",
+            "unitPrice": 65,
+            "isActive": true
+          },
+          {
+            "id": "LfkcoMynn0JFlhbkYeZQ",
+            "name": "OpenAI Demo Consulting Hour",
+            "unitPrice": 80,
+            "isActive": true
+          }
+        ],
+        "openInFrihetUrl": "https://app.frihet.io/products"
+      }
+    },
+    "flow4_workspaceSwitchAndCacheIsolation": {
+      "status": "PASSED",
+      "workspaceANamespace": "29d5491ba5e24a1b",
+      "workspaceBNamespace": "7a5193080c2dab72",
+      "generationBeforeSwitch": 0,
+      "cachedEntriesBeforeSwitch": 11,
+      "generationAfterSwitch": 1,
+      "cachedEntriesImmediatelyAfterSwitch": 0,
+      "inFlightRequestAbortedOnSwitch": true,
+      "staleWorkspaceAContextRemaining": false,
+      "workspaceBVerifiedName": "Frihet OpenAI Demo"
+    }
+  }
+}
