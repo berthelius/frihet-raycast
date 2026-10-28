@@ -55,7 +55,8 @@ export interface InvoiceLineItem {
   discountAmount?: number;
 }
 
-export type InvoiceStatus = "draft" | "sent" | "overdue" | "paid" | "cancelled" | string;
+export type InvoiceStatus =
+  "draft" | "sent" | "overdue" | "paid" | "cancelled" | string;
 
 export interface InvoiceRecord {
   id: string;
@@ -232,4 +233,5 @@ export interface BusinessContext {
   }>;
 }
 
-export type DeepLinkSection = "invoices" | "clients" | "products" | "quotes" | "expenses" | "dashboard";
+export type DeepLinkSection =
+  "invoices" | "clients" | "products" | "quotes" | "expenses" | "dashboard";

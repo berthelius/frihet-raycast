@@ -1,31 +1,9 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "issue": "berthelius/frihet-distribution#10",
-  "verifiedAt": "2026-10-28T10:28:46.337Z",
-  "startedAt": "2026-10-28T10:28:13.861Z",
+  "verifiedAt": "2026-10-28T12:38:39.782Z",
+  "startedAt": "2026-10-28T12:38:13.217Z",
   "apiBaseUrl": "https://api.frihet.io/v1",
-  "syntheticWorkspaceUid": "hnVCrCb9Pxf8BgLP0ijz84iuntt2",
-  "ephemeralCredentialCleanup": {
-    "ephemeralKeysRevokedCount": 2,
-    "revokedKeys": [
-      {
-        "label": "Profile-A",
-        "ephemeralKeyId": "repoBP33JWKmNyncITfR",
-        "redactedKeyPrefix": "fri_OI-j...[REDACTED]",
-        "deletedFromFirestore": true,
-        "postRevocationProbeUrl": "https://api.frihet.io/v1/context",
-        "postRevocationHttpStatus": 401
-      },
-      {
-        "label": "Profile-B",
-        "ephemeralKeyId": "1mG70w1Z2KuEOFYIgVSt",
-        "redactedKeyPrefix": "fri_JV4h...[REDACTED]",
-        "deletedFromFirestore": true,
-        "postRevocationProbeUrl": "https://api.frihet.io/v1/context",
-        "postRevocationHttpStatus": 401
-      }
-    ]
-  },
   "flows": {
     "flow1_connectionAndContext": {
       "status": "PASSED",
@@ -34,7 +12,7 @@
       "currency": "EUR",
       "fiscalZone": "canarias",
       "planTier": "free",
-      "tenantNamespace": "29d5491ba5e24a1b"
+      "tenantNamespace": "6140492150774d3f"
     },
     "flow2_businessBriefMonetaryAndTemporalContract": {
       "status": "PASSED",
@@ -243,13 +221,21 @@
           "invoiceNumber": "F20260004",
           "status": "draft",
           "clientName": "Acme SL",
-          "itemCount": 1
+          "itemCount": 1,
+          "deepLinkUrl": "https://app.frihet.io/invoices",
+          "deepLinkTargetProbe": {
+            "url": "https://app.frihet.io/invoices",
+            "httpStatus": 200,
+            "ok": true,
+            "contentType": "text/html; charset=utf-8",
+            "hasAppRootShell": true
+          }
         },
         "openInFrihetUrl": "https://app.frihet.io/invoices"
       },
       "clients": {
-        "inspected": 2,
-        "total": 2,
+        "inspected": 3,
+        "total": 3,
         "sampleNames": [
           {
             "id": "444IZvNpVrtJhj5nRySW",
@@ -258,6 +244,10 @@
           {
             "id": "RCjuHqsCchF5ZCB7gU0s",
             "name": "OpenAI Demo Sample Client"
+          },
+          {
+            "id": "eFj2cdKGXIAaXjjVnO9x",
+            "name": "Zapier v2.2.0 Ephemeral Lead 1793191059449 SL"
           }
         ],
         "openInFrihetUrl": "https://app.frihet.io/clients"
@@ -291,17 +281,86 @@
         "openInFrihetUrl": "https://app.frihet.io/products"
       }
     },
-    "flow4_workspaceSwitchAndCacheIsolation": {
+    "flow4_twoCompanyWorkspaceSwitchAndCacheIsolation": {
       "status": "PASSED",
-      "workspaceANamespace": "29d5491ba5e24a1b",
-      "workspaceBNamespace": "7a5193080c2dab72",
+      "twoDistinctCompaniesVerified": true,
+      "workspaceA": {
+        "companyName": "Frihet OpenAI Demo",
+        "fiscalZone": "canarias",
+        "tenantNamespace": "6140492150774d3f",
+        "invoiceIds": [
+          "0avUIazQWeadR9NIXNOu",
+          "UzxMlbbJ9PLLPcpRmF8y",
+          "Xzpy4RGYVdhSiByaHLvE",
+          "edeCSbfZtmpzx8q2S19s"
+        ],
+        "clientNames": [
+          "Acme SL",
+          "OpenAI Demo Sample Client",
+          "Zapier v2.2.0 Ephemeral Lead 1793191059449 SL"
+        ]
+      },
+      "workspaceB": {
+        "companyName": "Frihet MCP Test Company SL",
+        "fiscalZone": "peninsula",
+        "tenantNamespace": "93651fe989870b6c",
+        "invoiceIds": [
+          "3rJhIb48hpMjc9qTjUbj",
+          "6TQYdxNmukwPlAegsrQj",
+          "H95WGDJy4X9JNzrP63VR",
+          "IZ7RUIBLpRGRMh0mUqXQ",
+          "NuBEololc2bB38Kz9Ghz",
+          "TvRgq9S480uULOqFyywb",
+          "cEBoTYXQdfywGhl2Sg6c",
+          "hGrZUxktimCygU71vPnd",
+          "kjFvX6yARhO5DauICB1x",
+          "wlWPnP9YNDAddwTVzDWQ"
+        ],
+        "clientNames": [
+          "TechStart Solutions GmbH",
+          "Nordic Digital ApS",
+          "Barcelona Design Studio",
+          "Innovate Labs SL",
+          "Green Valley Organic Ltd"
+        ]
+      },
       "generationBeforeSwitch": 0,
       "cachedEntriesBeforeSwitch": 11,
       "generationAfterSwitch": 1,
       "cachedEntriesImmediatelyAfterSwitch": 0,
       "inFlightRequestAbortedOnSwitch": true,
       "staleWorkspaceAContextRemaining": false,
-      "workspaceBVerifiedName": "Frihet OpenAI Demo"
+      "overlappingInvoiceIds": [],
+      "overlappingClientIds": []
     }
+  },
+  "qaHarnessSeparation": {
+    "adminCredentialsInExtensionRepo": false,
+    "firebaseAdminInExtensionRepo": false,
+    "harnessScript": "frihet-distribution/activation-2026-10-28/raycast-qa-harness.mjs",
+    "clientScript": "frihet-raycast/scripts/verify-live-raycast-flows.mjs"
+  },
+  "ephemeralCredentialCleanup": {
+    "ephemeralKeysRevokedCount": 2,
+    "revokedKeys": [
+      {
+        "label": "Synthetic-Workspace-A-OpenAI-Demo",
+        "syntheticUid": "hnVCrCb9Pxf8BgLP0ijz84iuntt2",
+        "ephemeralKeyId": "5X4DJGuZlDCS1HIidBuy",
+        "redactedKeyPrefix": "fri_OCBP...[REDACTED]",
+        "deletedFromFirestore": true,
+        "postRevocationProbeUrl": "https://api.frihet.io/v1/context",
+        "postRevocationHttpStatus": 401
+      },
+      {
+        "label": "Synthetic-Workspace-B-MCP-Test-Company",
+        "syntheticUid": "5GyW6w25gZQU6bKHxDo6w4xiQV23",
+        "ephemeralKeyId": "zvVxPtMGZOHzMDi6fq7W",
+        "redactedKeyPrefix": "fri_rep1...[REDACTED]",
+        "deletedFromFirestore": true,
+        "postRevocationProbeUrl": "https://api.frihet.io/v1/context",
+        "postRevocationHttpStatus": 401
+      }
+    ]
   }
 }

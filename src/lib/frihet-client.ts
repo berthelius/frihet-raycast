@@ -57,7 +57,8 @@ export class FrihetApiError extends Error {
     this.name = "FrihetApiError";
     this.isAuthError = statusCode === 401;
     this.isPermissionError = statusCode === 403;
-    this.isOfflineError = statusCode === 0 || statusCode === 408 || statusCode === 503;
+    this.isOfflineError =
+      statusCode === 0 || statusCode === 408 || statusCode === 503;
     this.isRateLimitError = statusCode === 429;
     this.remediation = buildRemediation(statusCode, errorCode);
   }
@@ -85,7 +86,11 @@ function buildRemediation(statusCode: number, errorCode: string): string {
 function encodePathSegment(id: string): string {
   const clean = String(id).trim();
   if (!clean || clean === "." || clean === ".." || clean.includes("/")) {
-    throw new FrihetApiError(400, "invalid_identifier", "Invalid resource identifier.");
+    throw new FrihetApiError(
+      400,
+      "invalid_identifier",
+      "Invalid resource identifier.",
+    );
   }
   return encodeURIComponent(clean);
 }
@@ -100,18 +105,31 @@ export function validateSafeApiBaseUrl(rawBaseUrl?: string): string {
   try {
     parsed = new URL(normalized);
   } catch {
-    throw new FrihetApiError(400, "invalid_base_url", "Invalid Frihet API Base URL configured in preferences.");
+    throw new FrihetApiError(
+      400,
+      "invalid_base_url",
+      "Invalid Frihet API Base URL configured in preferences.",
+    );
   }
   if (parsed.username || parsed.password) {
-    throw new FrihetApiError(400, "invalid_base_url", "API Base URL must not embed credentials.");
+    throw new FrihetApiError(
+      400,
+      "invalid_base_url",
+      "API Base URL must not embed credentials.",
+    );
   }
   const host = parsed.hostname.toLowerCase();
-  const isLoopback = host === "127.0.0.1" || host === "localhost" || host === "::1";
+  const isLoopback =
+    host === "127.0.0.1" || host === "localhost" || host === "::1";
   if (isLoopback) {
     return normalized;
   }
   if (parsed.protocol !== "https:") {
-    throw new FrihetApiError(400, "insecure_base_url", "Frihet API Base URL must use HTTPS.");
+    throw new FrihetApiError(
+      400,
+      "insecure_base_url",
+      "Frihet API Base URL must use HTTPS.",
+    );
   }
   if (host !== "api.frihet.io" && !host.endsWith(".frihet.io")) {
     throw new FrihetApiError(
@@ -129,7 +147,12 @@ export function roundCurrency(value: number): number {
 
 function isFiniteRateInRange(value: unknown, min = 0, max = 100): boolean {
   if (value === undefined || value === null) return true;
-  return typeof value === "number" && Number.isFinite(value) && value >= min && value <= max;
+  return (
+    typeof value === "number" &&
+    Number.isFinite(value) &&
+    value >= min &&
+    value <= max
+  );
 }
 
 /**
@@ -142,20 +165,22 @@ function isFiniteRateInRange(value: unknown, min = 0, max = 100): boolean {
  *   `deductLineDiscountAmounts: true`, `compoundTaxes`, `prepayment`, `discountAmount`).
  */
 export function resolveDocumentAmount(
-  doc: Record<string, unknown> | {
-    total?: unknown;
-    amount?: unknown;
-    items?: unknown;
-    taxRate?: unknown;
-    irpfRate?: unknown;
-    equivalenceSurchargeRate?: unknown;
-    discountRate?: unknown;
-    pricesIncludeTax?: unknown;
-    deductLineDiscountAmounts?: unknown;
-    compoundTaxes?: unknown;
-    prepayment?: unknown;
-    currency?: unknown;
-  },
+  doc:
+    | Record<string, unknown>
+    | {
+        total?: unknown;
+        amount?: unknown;
+        items?: unknown;
+        taxRate?: unknown;
+        irpfRate?: unknown;
+        equivalenceSurchargeRate?: unknown;
+        discountRate?: unknown;
+        pricesIncludeTax?: unknown;
+        deductLineDiscountAmounts?: unknown;
+        compoundTaxes?: unknown;
+        prepayment?: unknown;
+        currency?: unknown;
+      },
   defaultCurrency = "EUR",
 ): ProvenancedAmount {
   const record = doc as Record<string, unknown>;
@@ -203,13 +228,16 @@ export function resolveDocumentAmount(
     record.pricesIncludeTax === true ||
     record.deductLineDiscountAmounts === true ||
     (Array.isArray(record.compoundTaxes) && record.compoundTaxes.length > 0) ||
-    (record.prepayment !== undefined && record.prepayment !== null && record.prepayment !== 0) ||
+    (record.prepayment !== undefined &&
+      record.prepayment !== null &&
+      record.prepayment !== 0) ||
     !isFiniteRateInRange(record.discountRate, 0, 100) ||
     !isFiniteRateInRange(record.taxRate, 0, 100) ||
     !isFiniteRateInRange(record.irpfRate, 0, 100) ||
     !isFiniteRateInRange(record.equivalenceSurchargeRate, 0, 100)
   ) {
-    const formula = "unavailable (unsupported or invalid calculation modifiers without stored total)";
+    const formula =
+      "unavailable (unsupported or invalid calculation modifiers without stored total)";
     return {
       amount: null,
       currency,
@@ -222,16 +250,20 @@ export function resolveDocumentAmount(
 
   const items = record.items as Array<Record<string, unknown>>;
   const docTaxRate = typeof record.taxRate === "number" ? record.taxRate : 0;
-  const docDiscountPct = typeof record.discountRate === "number" ? record.discountRate : 0;
+  const docDiscountPct =
+    typeof record.discountRate === "number" ? record.discountRate : 0;
   const docIrpfRate = typeof record.irpfRate === "number" ? record.irpfRate : 0;
   const docSurchargeRate =
-    typeof record.equivalenceSurchargeRate === "number" ? record.equivalenceSurchargeRate : 0;
+    typeof record.equivalenceSurchargeRate === "number"
+      ? record.equivalenceSurchargeRate
+      : 0;
 
   const baseByRate = new Map<number, number>();
   let subtotalBeforeDiscount = 0;
 
   for (const item of items) {
-    const rawLineDiscount = item?.discount !== undefined ? item.discount : item?.discountRate;
+    const rawLineDiscount =
+      item?.discount !== undefined ? item.discount : item?.discountRate;
     if (
       !item ||
       typeof item !== "object" ||
@@ -241,11 +273,14 @@ export function resolveDocumentAmount(
       typeof item.unitPrice !== "number" ||
       !Number.isFinite(item.unitPrice) ||
       item.unitPrice < 0 ||
-      (item.discountAmount !== undefined && item.discountAmount !== null && item.discountAmount !== 0) ||
+      (item.discountAmount !== undefined &&
+        item.discountAmount !== null &&
+        item.discountAmount !== 0) ||
       !isFiniteRateInRange(rawLineDiscount, 0, 100) ||
       !isFiniteRateInRange(item.taxRate, 0, 100)
     ) {
-      const formula = "unavailable (corrupt or incomplete line item without stored total)";
+      const formula =
+        "unavailable (corrupt or incomplete line item without stored total)";
       return {
         amount: null,
         currency,
@@ -256,16 +291,25 @@ export function resolveDocumentAmount(
       };
     }
 
-    const effectiveRate = typeof item.taxRate === "number" ? item.taxRate : docTaxRate;
-    const lineDiscountPct = typeof rawLineDiscount === "number" ? rawLineDiscount : 0;
-    const effectiveUnitPrice = roundCurrency(item.unitPrice * (1 - lineDiscountPct / 100));
+    const effectiveRate =
+      typeof item.taxRate === "number" ? item.taxRate : docTaxRate;
+    const lineDiscountPct =
+      typeof rawLineDiscount === "number" ? rawLineDiscount : 0;
+    const effectiveUnitPrice = roundCurrency(
+      item.unitPrice * (1 - lineDiscountPct / 100),
+    );
     const lineBase = roundCurrency(item.quantity * effectiveUnitPrice);
 
     subtotalBeforeDiscount = roundCurrency(subtotalBeforeDiscount + lineBase);
-    baseByRate.set(effectiveRate, roundCurrency((baseByRate.get(effectiveRate) ?? 0) + lineBase));
+    baseByRate.set(
+      effectiveRate,
+      roundCurrency((baseByRate.get(effectiveRate) ?? 0) + lineBase),
+    );
   }
 
-  const documentDiscount = roundCurrency(subtotalBeforeDiscount * (docDiscountPct / 100));
+  const documentDiscount = roundCurrency(
+    subtotalBeforeDiscount * (docDiscountPct / 100),
+  );
   const subtotal = roundCurrency(subtotalBeforeDiscount - documentDiscount);
 
   if (docDiscountPct > 0 && subtotalBeforeDiscount > 0) {
@@ -276,18 +320,24 @@ export function resolveDocumentAmount(
       if (i === rates.length - 1) {
         let otherGroupsTotal = 0;
         for (let j = 0; j < i; j++) {
-          otherGroupsTotal = roundCurrency(otherGroupsTotal + baseByRate.get(rates[j]!)!);
+          otherGroupsTotal = roundCurrency(
+            otherGroupsTotal + baseByRate.get(rates[j]!)!,
+          );
         }
         baseByRate.set(rate, roundCurrency(subtotal - otherGroupsTotal));
       } else {
-        const groupDiscount = roundCurrency(originalBase * (docDiscountPct / 100));
+        const groupDiscount = roundCurrency(
+          originalBase * (docDiscountPct / 100),
+        );
         baseByRate.set(rate, roundCurrency(originalBase - groupDiscount));
       }
     }
   }
 
   let totalTax = 0;
-  for (const [rate, base] of [...baseByRate.entries()].sort((a, b) => b[0] - a[0])) {
+  for (const [rate, base] of [...baseByRate.entries()].sort(
+    (a, b) => b[0] - a[0],
+  )) {
     const tax = roundCurrency(base * (rate / 100));
     totalTax = roundCurrency(totalTax + tax);
   }
@@ -345,7 +395,8 @@ export function sumProvenancedAmounts(
     const curr = (item.currency || normalizedDefault).trim().toUpperCase();
     const existing = totalsByCurrency[curr];
     const itemProv: "stored_field" | "derived_from_items" =
-      item.provenance === "derived_from_items" || item.provenance === "derived_from_lines"
+      item.provenance === "derived_from_items" ||
+      item.provenance === "derived_from_lines"
         ? "derived_from_items"
         : "stored_field";
 
@@ -372,7 +423,11 @@ export function sumProvenancedAmounts(
     return {
       amount: null,
       currency:
-        currencies.length === 1 ? currencies[0]! : currencies.length > 1 ? "MIXED" : normalizedDefault,
+        currencies.length === 1
+          ? currencies[0]!
+          : currencies.length > 1
+            ? "MIXED"
+            : normalizedDefault,
       provenance: "unavailable",
       formula,
       fieldOrFormula: formula,
@@ -426,7 +481,9 @@ export function formatProvenancedAmount(p: ProvenancedAmount): string {
   if (p.amount === null || p.provenance === "unavailable") {
     const unavailableCount = p.unavailableCount ?? 1;
     const knownParts = p.totalsByCurrency
-      ? Object.values(p.totalsByCurrency).map((b) => `${b.amount.toFixed(2)} ${b.currency}`)
+      ? Object.values(p.totalsByCurrency).map(
+          (b) => `${b.amount.toFixed(2)} ${b.currency}`,
+        )
       : [];
     if (knownParts.length > 0) {
       return `NO DETERMINADO (${unavailableCount} doc(s) sin importe válido; parcial conocido: ${knownParts.join(" + ")})`;
@@ -436,7 +493,10 @@ export function formatProvenancedAmount(p: ProvenancedAmount): string {
   return `${p.amount.toFixed(2)} ${p.currency}`;
 }
 
-export function formatCurrencyAmount(amount: number | null | undefined, currency = "EUR"): string {
+export function formatCurrencyAmount(
+  amount: number | null | undefined,
+  currency = "EUR",
+): string {
   if (amount === null || amount === undefined || !Number.isFinite(amount)) {
     return currency === "MIXED" ? "MIXED (multi-currency)" : "Unavailable";
   }
@@ -457,7 +517,9 @@ export function formatCurrencyAmount(amount: number | null | undefined, currency
  * Products created before explicit `isActive` defaults may omit `isActive`
  * (`undefined`). Those records are active unless explicitly set to `false`.
  */
-export function isProductEffectivelyActive(product: Pick<ProductRecord, "isActive">): boolean {
+export function isProductEffectivelyActive(
+  product: Pick<ProductRecord, "isActive">,
+): boolean {
   return product.isActive !== false;
 }
 
@@ -519,7 +581,9 @@ export class FrihetRestClient {
       );
     }
     this.apiKey = cleanKey;
-    this.baseUrl = validateSafeApiBaseUrl(options.apiBaseUrl ?? DEFAULT_API_BASE_URL);
+    this.baseUrl = validateSafeApiBaseUrl(
+      options.apiBaseUrl ?? DEFAULT_API_BASE_URL,
+    );
     this.cache = options.cache ?? globalTenantCache;
     this.fetchImpl = options.fetchImpl ?? globalThis.fetch;
     this.timeoutMs = options.timeoutMs ?? REQUEST_TIMEOUT_MS;
@@ -545,17 +609,23 @@ export class FrihetRestClient {
       }
     }
 
-    const slotKey = options?.slotKey ?? `${path}?${JSON.stringify(options?.query ?? {})}`;
+    const slotKey =
+      options?.slotKey ?? `${path}?${JSON.stringify(options?.query ?? {})}`;
     const { controller, generation, complete } = this.cache.beginRequest(
       this.tenantNamespace,
       slotKey,
     );
 
-    const onExternalAbort = (): void => controller.abort(options?.signal?.reason);
+    const onExternalAbort = (): void =>
+      controller.abort(options?.signal?.reason);
     if (options?.signal) {
       if (options.signal.aborted) {
         complete();
-        throw new FrihetApiError(499, "request_aborted", "Request was cancelled.");
+        throw new FrihetApiError(
+          499,
+          "request_aborted",
+          "Request was cancelled.",
+        );
       }
       options.signal.addEventListener("abort", onExternalAbort, { once: true });
     }
@@ -586,7 +656,7 @@ export class FrihetRestClient {
         },
         signal: controller.signal,
       });
-    } catch (error) {
+    } catch {
       clearTimeout(timeoutId);
       complete();
       if (options?.signal) {
@@ -601,7 +671,11 @@ export class FrihetRestClient {
             `Request to ${path} timed out after ${Math.round(this.timeoutMs / 1000)}s.`,
           );
         }
-        throw new FrihetApiError(499, "request_aborted", "Search request cancelled.");
+        throw new FrihetApiError(
+          499,
+          "request_aborted",
+          "Search request cancelled.",
+        );
       }
       throw new FrihetApiError(
         503,
@@ -641,7 +715,8 @@ export class FrihetRestClient {
         if (
           typeof errJson.meta === "object" &&
           errJson.meta !== null &&
-          typeof (errJson.meta as Record<string, unknown>).requestId === "string"
+          typeof (errJson.meta as Record<string, unknown>).requestId ===
+            "string"
         ) {
           requestId = (errJson.meta as Record<string, string>).requestId;
         }
@@ -653,7 +728,11 @@ export class FrihetRestClient {
 
     const raw = (await response.json()) as unknown;
     if (raw === null || raw === undefined) {
-      throw new FrihetApiError(200, "empty_response", "Frihet API returned an empty JSON body.");
+      throw new FrihetApiError(
+        200,
+        "empty_response",
+        "Frihet API returned an empty JSON body.",
+      );
     }
 
     if (cacheKey) {
@@ -671,7 +750,11 @@ export class FrihetRestClient {
       "data" in raw
     ) {
       const inner = (raw as { data: unknown }).data;
-      if (inner !== null && typeof inner === "object" && !Array.isArray(inner)) {
+      if (
+        inner !== null &&
+        typeof inner === "object" &&
+        !Array.isArray(inner)
+      ) {
         return inner as T;
       }
     }
@@ -699,7 +782,9 @@ export class FrihetRestClient {
       ...(typeof page.nextCursor === "string" && page.nextCursor
         ? { nextCursor: page.nextCursor }
         : {}),
-      ...(typeof page.truncated === "boolean" ? { truncated: page.truncated } : {}),
+      ...(typeof page.truncated === "boolean"
+        ? { truncated: page.truncated }
+        : {}),
     };
   }
 
@@ -819,7 +904,12 @@ export class FrihetRestClient {
 
   async listClientActivities(
     clientId: string,
-    params?: { limit?: number; offset?: number; bypassCache?: boolean; signal?: AbortSignal },
+    params?: {
+      limit?: number;
+      offset?: number;
+      bypassCache?: boolean;
+      signal?: AbortSignal;
+    },
   ): Promise<PaginatedResponse<ClientActivityRecord>> {
     const encoded = encodePathSegment(clientId);
     const query = {
@@ -827,13 +917,16 @@ export class FrihetRestClient {
       offset: params?.offset,
     };
     const cacheKey = `client-activities:${encoded}:${JSON.stringify(query)}`;
-    const raw = await this.requestJson<unknown>(`/clients/${encoded}/activities`, {
-      query,
-      slotKey: `client:activities:${encoded}`,
-      cacheKey,
-      bypassCache: params?.bypassCache,
-      signal: params?.signal,
-    });
+    const raw = await this.requestJson<unknown>(
+      `/clients/${encoded}/activities`,
+      {
+        query,
+        slotKey: `client:activities:${encoded}`,
+        cacheKey,
+        bypassCache: params?.bypassCache,
+        signal: params?.signal,
+      },
+    );
     return this.unwrapPaginated<ClientActivityRecord>(raw);
   }
 
@@ -853,7 +946,11 @@ export class FrihetRestClient {
   }): Promise<ProductSearchResult> {
     const resolvedFilter: ProductActiveFilter =
       params?.activeFilter ??
-      (params?.isActive === true ? "active" : params?.isActive === false ? "inactive" : "all");
+      (params?.isActive === true
+        ? "active"
+        : params?.isActive === false
+          ? "inactive"
+          : "all");
     return this.searchProducts({
       ...params,
       activeFilter: resolvedFilter,
@@ -914,14 +1011,20 @@ export class FrihetRestClient {
         limit: page.limit,
         offset: page.offset,
         ...(page.nextCursor ? { nextCursor: page.nextCursor } : {}),
-        ...(typeof page.truncated === "boolean" ? { truncated: page.truncated } : {}),
+        ...(typeof page.truncated === "boolean"
+          ? { truncated: page.truncated }
+          : {}),
         usedClientFallback: false,
         usedClientSideFallback: false,
         fallbackCoveragePartial: false,
       };
     } catch (error) {
       // Temporary fallback until berthelius/Frihet-ERP#2944 is deployed to production; remove once GET /v1/products?isActive=true returns 200 in production
-      if (error instanceof FrihetApiError && error.statusCode >= 500 && error.statusCode < 600) {
+      if (
+        error instanceof FrihetApiError &&
+        error.statusCode >= 500 &&
+        error.statusCode < 600
+      ) {
         const fallbackCacheKey = `products:fallback:${JSON.stringify(baseQuery)}`;
         const rawFallback = await this.requestJson<unknown>("/products", {
           query: baseQuery,
@@ -931,17 +1034,24 @@ export class FrihetRestClient {
           signal: params?.signal,
         });
         const unfilteredPage = this.unwrapPaginated<ProductRecord>(rawFallback);
-        const filteredRows = filterProductsByActiveMode(unfilteredPage.data, filter);
+        const filteredRows = filterProductsByActiveMode(
+          unfilteredPage.data,
+          filter,
+        );
         const fallbackCoveragePartial =
           unfilteredPage.total > unfilteredPage.data.length ||
           Boolean(unfilteredPage.nextCursor) ||
           Boolean(unfilteredPage.truncated);
         return {
           data: filteredRows,
-          total: fallbackCoveragePartial ? unfilteredPage.total : filteredRows.length,
+          total: fallbackCoveragePartial
+            ? unfilteredPage.total
+            : filteredRows.length,
           limit: unfilteredPage.limit,
           offset: unfilteredPage.offset,
-          ...(unfilteredPage.nextCursor ? { nextCursor: unfilteredPage.nextCursor } : {}),
+          ...(unfilteredPage.nextCursor
+            ? { nextCursor: unfilteredPage.nextCursor }
+            : {}),
           ...(typeof unfilteredPage.truncated === "boolean"
             ? { truncated: unfilteredPage.truncated }
             : {}),

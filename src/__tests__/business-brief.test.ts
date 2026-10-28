@@ -159,8 +159,16 @@ function buildCompleteQaWorkspaceClient(calls: string[]): BriefClientPort {
       calls.push("listClients");
       return {
         data: [
-          { id: "444IZvNpVrtJhj5nRySW", name: "Acme SL", email: "contact@acme.example" },
-          { id: "RCjuHqsCchF5ZCB7gU0s", name: "OpenAI Demo Sample Client", email: "demo@example.com" },
+          {
+            id: "444IZvNpVrtJhj5nRySW",
+            name: "Acme SL",
+            email: "contact@acme.example",
+          },
+          {
+            id: "RCjuHqsCchF5ZCB7gU0s",
+            name: "OpenAI Demo Sample Client",
+            email: "demo@example.com",
+          },
         ],
         total: 2,
         limit: 25,
@@ -204,7 +212,13 @@ function buildPartialMultiPageWorkspaceClient(): BriefClientPort {
           clientName: "Logistica Norte SL",
           status: "draft",
           issueDate: "2026-10-27",
-          items: [{ description: "Consultoria logistica", quantity: 3, unitPrice: 100 }],
+          items: [
+            {
+              description: "Consultoria logistica",
+              quantity: 3,
+              unitPrice: 100,
+            },
+          ],
           taxRate: 21,
         },
         {
@@ -246,7 +260,12 @@ function buildPartialMultiPageWorkspaceClient(): BriefClientPort {
       limit: 1,
       offset: 0,
     }),
-    listClientActivities: async () => ({ data: [], total: 0, limit: 5, offset: 0 }),
+    listClientActivities: async () => ({
+      data: [],
+      total: 0,
+      limit: 5,
+      offset: 0,
+    }),
   };
 }
 
@@ -259,7 +278,10 @@ describe("BRIEF-01 — Operational Business Brief Engine", () => {
     );
 
     assert.equal(brief.coverage.isPartial, false);
-    assert.equal(brief.coverage.temporalScope, "unfiltered_operational_sample_as_of_date");
+    assert.equal(
+      brief.coverage.temporalScope,
+      "unfiltered_operational_sample_as_of_date",
+    );
     assert.equal(brief.coverage.referenceMonth, "2026-10");
     assert.match(brief.coverage.badgeLabel, /^Complete Coverage/u);
 
@@ -278,13 +300,23 @@ describe("BRIEF-01 — Operational Business Brief Engine", () => {
     assert.equal(brief.financials.recordedPaid.total.amount, 484);
 
     // 4. Outstanding Balance (nominal unpaid) = overdue (605) + on-time sent (847) = 1452
-    assert.equal(brief.financials.outstandingBalance.realOutstandingBalanceDeterminable, false);
+    assert.equal(
+      brief.financials.outstandingBalance.realOutstandingBalanceDeterminable,
+      false,
+    );
     assert.equal(
       brief.financials.outstandingBalance.unpaidNominalSemantics,
       "nominal_unpaid_invoice_totals_without_partial_payments",
     );
-    assert.equal(brief.financials.outstandingBalance.unpaidNominalTotal.amount, 1452);
-    assert.equal(brief.financials.outstandingBalance.unpaidNominalTotalsByCurrency.EUR?.amount, 1452);
+    assert.equal(
+      brief.financials.outstandingBalance.unpaidNominalTotal.amount,
+      1452,
+    );
+    assert.equal(
+      brief.financials.outstandingBalance.unpaidNominalTotalsByCurrency.EUR
+        ?.amount,
+      1452,
+    );
     assert.equal(brief.financials.outstandingBalance.totalCount, 2);
     assert.equal(brief.financials.outstandingBalance.totalAmount.amount, 1452);
     assert.equal(brief.financials.outstandingBalance.overdueCount, 1);
@@ -293,13 +325,31 @@ describe("BRIEF-01 — Operational Business Brief Engine", () => {
     assert.equal(brief.financials.outstandingBalance.onTimeAmount.amount, 847);
 
     // 5. Current Month (2026-10) subset separated from September overdue invoice (847 + 484 = 1331 EUR)
-    assert.equal(brief.financials.currentMonthActivity.referenceMonth, "2026-10");
-    assert.equal(brief.financials.currentMonthActivity.issuedInvoicesInMonthCount, 2);
-    assert.equal(brief.financials.currentMonthActivity.issuedInvoicesInMonthTotal.amount, 1331);
-    assert.equal(brief.financials.currentMonthActivity.invoiceDraftsInMonthCount, 2);
-    assert.equal(brief.financials.currentMonthActivity.invoiceDraftsInMonthTotal.amount, 1745);
+    assert.equal(
+      brief.financials.currentMonthActivity.referenceMonth,
+      "2026-10",
+    );
+    assert.equal(
+      brief.financials.currentMonthActivity.issuedInvoicesInMonthCount,
+      2,
+    );
+    assert.equal(
+      brief.financials.currentMonthActivity.issuedInvoicesInMonthTotal.amount,
+      1331,
+    );
+    assert.equal(
+      brief.financials.currentMonthActivity.invoiceDraftsInMonthCount,
+      2,
+    );
+    assert.equal(
+      brief.financials.currentMonthActivity.invoiceDraftsInMonthTotal.amount,
+      1745,
+    );
     assert.equal(brief.financials.currentMonthActivity.expensesInMonthCount, 1);
-    assert.equal(brief.financials.currentMonthActivity.expensesInMonthTotal.amount, 121);
+    assert.equal(
+      brief.financials.currentMonthActivity.expensesInMonthTotal.amount,
+      121,
+    );
 
     // 6. Non-deductible expense neutrality: `taxDeductible: false` with vendor & category is NOT flagged as incomplete
     assert.equal(brief.financials.expensesSummary.count, 2);
@@ -314,7 +364,13 @@ describe("BRIEF-01 — Operational Business Brief Engine", () => {
     // Review items include overdue_invoice, draft_invoice, tax_discrepancy (21% vs 7%), crm_followup, plan_quota (4/5 = 80%)
     assert.deepEqual(
       brief.reviewItems.map((i) => i.category),
-      ["overdue_invoice", "draft_invoice", "tax_discrepancy", "crm_followup", "plan_quota"],
+      [
+        "overdue_invoice",
+        "draft_invoice",
+        "tax_discrepancy",
+        "crm_followup",
+        "plan_quota",
+      ],
     );
     assert.equal(brief.mutationsExecuted, 0);
   });
@@ -326,16 +382,28 @@ describe("BRIEF-01 — Operational Business Brief Engine", () => {
     );
 
     assert.equal(brief.coverage.isPartial, true);
-    assert.match(brief.coverage.badgeLabel, /^Partial Sample: 2\/47 inv · 1\/35 exp/u);
-    assert.match(brief.blindSpots[0] ?? "", /Partial workspace sample: inspected 2\/47 invoices/u);
+    assert.match(
+      brief.coverage.badgeLabel,
+      /^Partial Sample: 2\/47 inv · 1\/35 exp/u,
+    );
+    assert.match(
+      brief.blindSpots[0] ?? "",
+      /Partial workspace sample: inspected 2\/47 invoices/u,
+    );
 
     // Legacy draft without stored total is derived from items (3 * 100 * 1.21 = 363)
     assert.equal(brief.financials.drafts.invoiceDraftsTotal.amount, 363);
-    assert.equal(brief.financials.drafts.invoiceDraftsTotal.provenance, "derived_from_items");
+    assert.equal(
+      brief.financials.drafts.invoiceDraftsTotal.provenance,
+      "derived_from_items",
+    );
 
     // Past-due sent invoice (dueDate 2026-10-15 < 2026-10-28) is classified under overdue
     assert.equal(brief.financials.outstandingBalance.overdueCount, 1);
-    assert.equal(brief.financials.outstandingBalance.overdueAmount.amount, 2420);
+    assert.equal(
+      brief.financials.outstandingBalance.overdueAmount.amount,
+      2420,
+    );
 
     // Expense missing vendor & category is flagged under incomplete_expense
     assert.equal(brief.financials.expensesSummary.incompleteMetadataCount, 1);

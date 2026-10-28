@@ -4,7 +4,7 @@
   "title": "Frihet ERP",
   "description": "Search invoices, clients, products, and review your daily operational business brief in Frihet ERP directly from the keyboard.",
   "icon": "icon.png",
-  "author": "frihet",
+  "author": "viktor",
   "categories": [
     "Productivity",
     "Finance"
@@ -69,17 +69,24 @@
     }
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "ray build -e dist",
+    "build:dist": "ray build -e dist -o dist",
+    "build:tsc": "tsc -p tsconfig.build.json",
+    "dev": "ray develop",
+    "lint": "ray lint",
+    "fix-lint": "ray lint --fix",
     "typecheck": "tsc --noEmit",
-    "test": "npm run build && node --test dist/__tests__/*.test.js",
-    "lint": "tsc --noEmit"
+    "test": "npm run build:tsc && node --test dist/__tests__/*.test.js"
   },
   "dependencies": {
     "@raycast/api": "^1.104.25"
   },
   "devDependencies": {
+    "@raycast/eslint-config": "^2.2.0",
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.10",
+    "eslint": "^9.39.5",
+    "prettier": "^3.9.10",
     "react": "^19.0.0",
     "typescript": "^5.7.2"
   }

@@ -23,11 +23,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run Raycast SDK lint (manifest, icons, metadata, ESLint & Prettier)
+        run: npm run lint
+
       - name: Run TypeScript typecheck
         run: npm run typecheck
 
       - name: Run contract & unit test suite
         run: npm test
 
-      - name: Verify production build
+      - name: Verify Raycast distribution build (ray build -e dist)
         run: npm run build

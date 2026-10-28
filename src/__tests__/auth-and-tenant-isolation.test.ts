@@ -76,12 +76,27 @@ describe("AUTH-01 & REL-01 — Authentication, Error Recovery & Redirect Contain
   });
 
   test("validates base URL and refuses untrusted hosts, plain HTTP, and HTTP redirects", async () => {
-    assert.equal(validateSafeApiBaseUrl("https://api.frihet.io/v1/"), "https://api.frihet.io/v1");
-    assert.equal(validateSafeApiBaseUrl("http://127.0.0.1:8787/v1"), "http://127.0.0.1:8787/v1");
+    assert.equal(
+      validateSafeApiBaseUrl("https://api.frihet.io/v1/"),
+      "https://api.frihet.io/v1",
+    );
+    assert.equal(
+      validateSafeApiBaseUrl("http://127.0.0.1:8787/v1"),
+      "http://127.0.0.1:8787/v1",
+    );
 
-    assert.throws(() => validateSafeApiBaseUrl("http://api.frihet.io/v1"), /HTTPS/u);
-    assert.throws(() => validateSafeApiBaseUrl("https://evil.example.com/v1"), /frihet\.io/u);
-    assert.throws(() => validateSafeApiBaseUrl("https://user:pass@api.frihet.io/v1"), /credentials/u);
+    assert.throws(
+      () => validateSafeApiBaseUrl("http://api.frihet.io/v1"),
+      /HTTPS/u,
+    );
+    assert.throws(
+      () => validateSafeApiBaseUrl("https://evil.example.com/v1"),
+      /frihet\.io/u,
+    );
+    assert.throws(
+      () => validateSafeApiBaseUrl("https://user:pass@api.frihet.io/v1"),
+      /credentials/u,
+    );
 
     const client = new FrihetRestClient({
       apiKey: "fri_redirect_test_key",
@@ -131,7 +146,10 @@ describe("AUTH-02 — Cross-Tenant Cache Isolation & In-Flight Request Cancellat
 
     // Start slow search in Tenant A
     const pendingSearchA = clientTenantA.listInvoices({ q: "Acme" });
-    assert.ok(tenantASignal, "Tenant A request should have registered an AbortSignal");
+    assert.ok(
+      tenantASignal,
+      "Tenant A request should have registered an AbortSignal",
+    );
     assert.equal(tenantASignal.aborted, false);
 
     // Switch to Tenant B while Tenant A's search is still in-flight
@@ -142,7 +160,15 @@ describe("AUTH-02 — Cross-Tenant Cache Isolation & In-Flight Request Cancellat
       fetchImpl: async () =>
         new Response(
           JSON.stringify({
-            data: [{ id: "inv_bravo_1", invoiceNumber: "B2026-001", clientName: "Bravo Corp", status: "sent", total: 500 }],
+            data: [
+              {
+                id: "inv_bravo_1",
+                invoiceNumber: "B2026-001",
+                clientName: "Bravo Corp",
+                status: "sent",
+                total: 500,
+              },
+            ],
             total: 1,
             limit: 25,
             offset: 0,
@@ -152,8 +178,15 @@ describe("AUTH-02 — Cross-Tenant Cache Isolation & In-Flight Request Cancellat
     });
 
     // Activating Tenant B must immediately abort Tenant A's in-flight request
-    assert.equal(tenantASignal.aborted, true, "Tenant A in-flight request must be aborted on tenant switch");
-    assert.notEqual(clientTenantA.tenantNamespace, clientTenantB.tenantNamespace);
+    assert.equal(
+      tenantASignal.aborted,
+      true,
+      "Tenant A in-flight request must be aborted on tenant switch",
+    );
+    assert.notEqual(
+      clientTenantA.tenantNamespace,
+      clientTenantB.tenantNamespace,
+    );
 
     await assert.rejects(
       () => pendingSearchA,
@@ -170,7 +203,10 @@ describe("AUTH-02 — Cross-Tenant Cache Isolation & In-Flight Request Cancellat
     assert.equal(pageB.data[0]?.clientName, "Bravo Corp");
 
     // Even if a stale caller attempts to read or write under Tenant A's namespace, it is rejected
-    assert.equal(sharedCache.get(clientTenantA.tenantNamespace, "any"), undefined);
+    assert.equal(
+      sharedCache.get(clientTenantA.tenantNamespace, "any"),
+      undefined,
+    );
     if (resolveTenantAFetch) {
       resolveTenantAFetch(new Response("{}"));
     }
@@ -198,7 +234,10 @@ describe("AUTH-02 — Cross-Tenant Cache Isolation & In-Flight Request Cancellat
                   limit: 25,
                   offset: 0,
                 }),
-                { status: 200, headers: { "Content-Type": "application/json" } },
+                {
+                  status: 200,
+                  headers: { "Content-Type": "application/json" },
+                },
               ),
             );
           }
@@ -210,7 +249,11 @@ describe("AUTH-02 — Cross-Tenant Cache Isolation & In-Flight Request Cancellat
     const secondQuery = client.listClients({ q: "Acme", bypassCache: true });
 
     assert.equal(signals.length, 2);
-    assert.equal(signals[0]?.aborted, true, "First search request must be aborted by second search");
+    assert.equal(
+      signals[0]?.aborted,
+      true,
+      "First search request must be aborted by second search",
+    );
     assert.equal(signals[1]?.aborted, false);
 
     await assert.rejects(() => firstQuery, { name: "FrihetApiError" });

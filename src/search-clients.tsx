@@ -7,18 +7,32 @@ import {
   openExtensionPreferences,
   showToast,
   Toast,
+  Keyboard,
 } from "@raycast/api";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { buildFrihetDeepLink, FrihetApiError } from "./lib/frihet-client.js";
-import { clearActiveWorkspaceCache, createClientFromPreferences } from "./lib/runtime-client.js";
-import type { ClientActivityRecord, ClientAddress, ClientRecord } from "./lib/types.js";
+import {
+  clearActiveWorkspaceCache,
+  createClientFromPreferences,
+} from "./lib/runtime-client.js";
+import type {
+  ClientActivityRecord,
+  ClientAddress,
+  ClientRecord,
+} from "./lib/types.js";
 
 const PAGE_LIMIT = 20;
 
 function formatAddress(addr?: ClientAddress | string): string {
   if (!addr) return "—";
   if (typeof addr === "string") return addr.trim() || "—";
-  const parts = [addr.street, addr.postalCode, addr.city, addr.state, addr.country].filter(Boolean);
+  const parts = [
+    addr.street,
+    addr.postalCode,
+    addr.city,
+    addr.state,
+    addr.country,
+  ].filter(Boolean);
   return parts.length > 0 ? parts.join(", ") : "—";
 }
 
@@ -39,12 +53,15 @@ function renderClientMarkdown(
   ];
 
   if (!activities) {
-    lines.push("_Select this client or press **Enter** to load recent CRM activities._");
+    lines.push(
+      "_Select this client or press **Enter** to load recent CRM activities._",
+    );
   } else if (activities.length === 0) {
     lines.push("_No recorded CRM activities for this client._");
   } else {
     for (const act of activities) {
-      const dateStr = (act.date ?? act.createdAt ?? "").slice(0, 10) || "Recent";
+      const dateStr =
+        (act.date ?? act.createdAt ?? "").slice(0, 10) || "Recent";
       const typeLabel = (act.type ?? "activity").toUpperCase();
       const summary = act.title ?? act.description ?? act.notes ?? act.id;
       lines.push(`- **[${typeLabel}]** (${dateStr}): ${summary}`);
@@ -67,7 +84,11 @@ export default function SearchClientsCommand() {
   const abortRef = useRef<AbortController | null>(null);
 
   const fetchClients = useCallback(
-    async (opts?: { cursor?: string; append?: boolean; bypassCache?: boolean }) => {
+    async (opts?: {
+      cursor?: string;
+      append?: boolean;
+      bypassCache?: boolean;
+    }) => {
       if (abortRef.current) {
         abortRef.current.abort();
       }
@@ -86,17 +107,26 @@ export default function SearchClientsCommand() {
           signal: controller.signal,
         });
 
-        setClients((prev) => (opts?.append ? [...prev, ...page.data] : page.data));
+        setClients((prev) =>
+          opts?.append ? [...prev, ...page.data] : page.data,
+        );
         setTotal(page.total);
         setNextCursor(page.nextCursor);
       } catch (err) {
-        if (err instanceof FrihetApiError && err.errorCode === "request_aborted") {
+        if (
+          err instanceof FrihetApiError &&
+          err.errorCode === "request_aborted"
+        ) {
           return;
         }
         const apiErr =
           err instanceof FrihetApiError
             ? err
-            : new FrihetApiError(500, "unexpected_error", err instanceof Error ? err.message : String(err));
+            : new FrihetApiError(
+                500,
+                "unexpected_error",
+                err instanceof Error ? err.message : String(err),
+              );
         if (!opts?.append) {
           setClients([]);
         }
@@ -154,7 +184,11 @@ export default function SearchClientsCommand() {
       {error ? (
         <List.EmptyView
           icon={{ source: Icon.ExclamationMark, tintColor: Color.Red }}
-          title={error.isAuthError ? "Authentication Required (401)" : `Unable to Load Clients (${error.statusCode})`}
+          title={
+            error.isAuthError
+              ? "Authentication Required (401)"
+              : `Unable to Load Clients (${error.statusCode})`
+          }
           description={error.remediation}
           actions={
             <ActionPanel>
@@ -168,7 +202,10 @@ export default function SearchClientsCommand() {
                 icon={Icon.RotateClockwise}
                 onAction={() => void fetchClients({ bypassCache: true })}
               />
-              <Action.OpenInBrowser title="Open Frihet Clients" url={deepLinkUrl} />
+              <Action.OpenInBrowser
+                title="Open Frihet Clients"
+                url={deepLinkUrl}
+              />
             </ActionPanel>
           }
         />
@@ -188,7 +225,10 @@ export default function SearchClientsCommand() {
                 icon={Icon.RotateClockwise}
                 onAction={() => void fetchClients({ bypassCache: true })}
               />
-              <Action.OpenInBrowser title="Open Frihet Clients" url={deepLinkUrl} />
+              <Action.OpenInBrowser
+                title="Open Frihet Clients"
+                url={deepLinkUrl}
+              />
             </ActionPanel>
           }
         />
@@ -212,7 +252,9 @@ export default function SearchClientsCommand() {
               title={cli.name}
               subtitle={cli.email ?? ""}
               accessories={[
-                ...(cli.taxId ? [{ tag: { value: cli.taxId, color: Color.SecondaryText } }] : []),
+                ...(cli.taxId
+                  ? [{ tag: { value: cli.taxId, color: Color.SecondaryText } }]
+                  : []),
                 ...(cli.stage ? [{ text: cli.stage }] : []),
               ]}
               detail={
@@ -220,11 +262,26 @@ export default function SearchClientsCommand() {
                   markdown={renderClientMarkdown(cli, activities)}
                   metadata={
                     <List.Item.Detail.Metadata>
-                      <List.Item.Detail.Metadata.Label title="Client Name" text={cli.name} />
-                      <List.Item.Detail.Metadata.Label title="Client ID" text={cli.id} />
-                      <List.Item.Detail.Metadata.Label title="Email" text={cli.email ?? "—"} />
-                      <List.Item.Detail.Metadata.Label title="Phone" text={cli.phone ?? "—"} />
-                      <List.Item.Detail.Metadata.Label title="Tax ID" text={cli.taxId ?? "—"} />
+                      <List.Item.Detail.Metadata.Label
+                        title="Client Name"
+                        text={cli.name}
+                      />
+                      <List.Item.Detail.Metadata.Label
+                        title="Client ID"
+                        text={cli.id}
+                      />
+                      <List.Item.Detail.Metadata.Label
+                        title="Email"
+                        text={cli.email ?? "—"}
+                      />
+                      <List.Item.Detail.Metadata.Label
+                        title="Phone"
+                        text={cli.phone ?? "—"}
+                      />
+                      <List.Item.Detail.Metadata.Label
+                        title="Tax ID"
+                        text={cli.taxId ?? "—"}
+                      />
                       <List.Item.Detail.Metadata.Label
                         title="Address"
                         text={formatAddress(cli.address)}
@@ -232,7 +289,11 @@ export default function SearchClientsCommand() {
                       <List.Item.Detail.Metadata.Separator />
                       <List.Item.Detail.Metadata.Label
                         title="CRM Activities Loaded"
-                        text={activities ? `${activities.length} record(s)` : "Select to load"}
+                        text={
+                          activities
+                            ? `${activities.length} record(s)`
+                            : "Select to load"
+                        }
                       />
                     </List.Item.Detail.Metadata>
                   }
@@ -241,7 +302,10 @@ export default function SearchClientsCommand() {
               actions={
                 <ActionPanel>
                   <ActionPanel.Section title="Client Actions">
-                    <Action.OpenInBrowser title="Open in Frihet" url={deepLinkUrl} />
+                    <Action.OpenInBrowser
+                      title="Open in Frihet"
+                      url={deepLinkUrl}
+                    />
                     {cli.email ? (
                       <Action.CopyToClipboard
                         title="Copy Email"
@@ -253,10 +317,13 @@ export default function SearchClientsCommand() {
                       <Action.CopyToClipboard
                         title="Copy Tax ID"
                         content={cli.taxId}
-                        shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
+                        shortcut={Keyboard.Shortcut.Common.Copy}
                       />
                     ) : null}
-                    <Action.CopyToClipboard title="Copy Client ID" content={cli.id} />
+                    <Action.CopyToClipboard
+                      title="Copy Client ID"
+                      content={cli.id}
+                    />
                     <Action
                       title="Load CRM Activities"
                       icon={Icon.Clock}
@@ -268,13 +335,18 @@ export default function SearchClientsCommand() {
                       <Action
                         title={`Load Next Page (${clients.length}/${total})`}
                         icon={Icon.ArrowDown}
-                        onAction={() => void fetchClients({ cursor: nextCursor, append: true })}
+                        onAction={() =>
+                          void fetchClients({
+                            cursor: nextCursor,
+                            append: true,
+                          })
+                        }
                       />
                     ) : null}
                     <Action
                       title="Refresh & Clear Workspace Cache"
                       icon={Icon.RotateClockwise}
-                      shortcut={{ modifiers: ["cmd"], key: "r" }}
+                      shortcut={Keyboard.Shortcut.Common.Refresh}
                       onAction={() => {
                         clearActiveWorkspaceCache();
                         setActivitiesByClient({});

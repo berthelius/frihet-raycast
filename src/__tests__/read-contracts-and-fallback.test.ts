@@ -43,7 +43,13 @@ describe("READ-01 & FISC-01 — Invoices, Clients, Products & Legacy isActive Fa
                 issueDate: "2026-10-28",
                 dueDate: "2026-11-12",
                 taxRate: 21,
-                items: [{ description: "Consultoria estrategica QA", quantity: 10, unitPrice: 100 }],
+                items: [
+                  {
+                    description: "Consultoria estrategica QA",
+                    quantity: 10,
+                    unitPrice: 100,
+                  },
+                ],
               },
               meta: { requestId: "req_detail_1" },
             }),
@@ -145,8 +151,14 @@ describe("READ-01 & FISC-01 — Invoices, Clients, Products & Legacy isActive Fa
     assert.equal(isProductEffectivelyActive(catalogueFixture[1]!), true);
     assert.equal(isProductEffectivelyActive(catalogueFixture[2]!), false);
 
-    assert.equal(filterProductsByActiveMode(catalogueFixture, "active").length, 2);
-    assert.equal(filterProductsByActiveMode(catalogueFixture, "inactive").length, 1);
+    assert.equal(
+      filterProductsByActiveMode(catalogueFixture, "active").length,
+      2,
+    );
+    assert.equal(
+      filterProductsByActiveMode(catalogueFixture, "inactive").length,
+      1,
+    );
     assert.equal(filterProductsByActiveMode(catalogueFixture, "all").length, 3);
 
     let simulateTotal = catalogueFixture.length;
@@ -161,7 +173,10 @@ describe("READ-01 & FISC-01 — Invoices, Clients, Products & Legacy isActive Fa
         // Simulate pre-PR #2944 HTTP 500 when `?isActive=` is sent on the wire
         if (urlStr.includes("isActive=")) {
           return new Response(
-            JSON.stringify({ error: "INTERNAL_ERROR", message: "Firestore query failed" }),
+            JSON.stringify({
+              error: "INTERNAL_ERROR",
+              message: "Firestore query failed",
+            }),
             { status: 500, headers: { "Content-Type": "application/json" } },
           );
         }
@@ -255,12 +270,23 @@ describe("READ-01 & FISC-01 — Invoices, Clients, Products & Legacy isActive Fa
     assert.equal(clients.data.length, 1);
     assert.equal(clients.data[0]?.name, "Acme SL");
 
-    const activities = await client.listClientActivities("444IZvNpVrtJhj5nRySW");
+    const activities = await client.listClientActivities(
+      "444IZvNpVrtJhj5nRySW",
+    );
     assert.equal(activities.data.length, 1);
     assert.equal(activities.data[0]?.type, "call");
 
-    assert.equal(buildFrihetDeepLink("invoices"), "https://app.frihet.io/invoices");
-    assert.equal(buildFrihetDeepLink("clients"), "https://app.frihet.io/clients");
-    assert.equal(buildFrihetDeepLink("products"), "https://app.frihet.io/products");
+    assert.equal(
+      buildFrihetDeepLink("invoices"),
+      "https://app.frihet.io/invoices",
+    );
+    assert.equal(
+      buildFrihetDeepLink("clients"),
+      "https://app.frihet.io/clients",
+    );
+    assert.equal(
+      buildFrihetDeepLink("products"),
+      "https://app.frihet.io/products",
+    );
   });
 });

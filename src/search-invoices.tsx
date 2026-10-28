@@ -7,6 +7,7 @@ import {
   openExtensionPreferences,
   showToast,
   Toast,
+  Keyboard,
 } from "@raycast/api";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -15,7 +16,10 @@ import {
   FrihetApiError,
   resolveDocumentAmount,
 } from "./lib/frihet-client.js";
-import { clearActiveWorkspaceCache, createClientFromPreferences } from "./lib/runtime-client.js";
+import {
+  clearActiveWorkspaceCache,
+  createClientFromPreferences,
+} from "./lib/runtime-client.js";
 import type { InvoiceRecord, InvoiceStatus } from "./lib/types.js";
 
 const PAGE_LIMIT = 20;
@@ -38,7 +42,8 @@ function statusBadge(status?: InvoiceStatus): { value: string; color: Color } {
 }
 
 function renderInvoiceMarkdown(invoice: InvoiceRecord): string {
-  const numberLabel = invoice.invoiceNumber ?? invoice.documentNumber ?? invoice.id;
+  const numberLabel =
+    invoice.invoiceNumber ?? invoice.documentNumber ?? invoice.id;
   const resolved = resolveDocumentAmount(invoice, invoice.currency ?? "EUR");
   const lines: string[] = [
     `# Invoice ${numberLabel}`,
@@ -58,7 +63,12 @@ function renderInvoiceMarkdown(invoice: InvoiceRecord): string {
   }
 
   if (Array.isArray(invoice.items) && invoice.items.length > 0) {
-    lines.push("## Line Items", "", "| Description | Qty | Unit Price | Line Subtotal |", "|---|---:|---:|---:|");
+    lines.push(
+      "## Line Items",
+      "",
+      "| Description | Qty | Unit Price | Line Subtotal |",
+      "|---|---:|---:|---:|",
+    );
     for (const item of invoice.items) {
       const subtotal = (item.quantity ?? 0) * (item.unitPrice ?? 0);
       lines.push(
@@ -84,7 +94,9 @@ export default function SearchInvoicesCommand() {
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
-  const [detailedById, setDetailedById] = useState<Record<string, InvoiceRecord>>({});
+  const [detailedById, setDetailedById] = useState<
+    Record<string, InvoiceRecord>
+  >({});
   const [total, setTotal] = useState<number>(0);
   const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -92,7 +104,11 @@ export default function SearchInvoicesCommand() {
   const abortRef = useRef<AbortController | null>(null);
 
   const fetchInvoices = useCallback(
-    async (opts?: { cursor?: string; append?: boolean; bypassCache?: boolean }) => {
+    async (opts?: {
+      cursor?: string;
+      append?: boolean;
+      bypassCache?: boolean;
+    }) => {
       if (abortRef.current) {
         abortRef.current.abort();
       }
@@ -112,17 +128,26 @@ export default function SearchInvoicesCommand() {
           signal: controller.signal,
         });
 
-        setInvoices((prev) => (opts?.append ? [...prev, ...page.data] : page.data));
+        setInvoices((prev) =>
+          opts?.append ? [...prev, ...page.data] : page.data,
+        );
         setTotal(page.total);
         setNextCursor(page.nextCursor);
       } catch (err) {
-        if (err instanceof FrihetApiError && err.errorCode === "request_aborted") {
+        if (
+          err instanceof FrihetApiError &&
+          err.errorCode === "request_aborted"
+        ) {
           return;
         }
         const apiErr =
           err instanceof FrihetApiError
             ? err
-            : new FrihetApiError(500, "unexpected_error", err instanceof Error ? err.message : String(err));
+            : new FrihetApiError(
+                500,
+                "unexpected_error",
+                err instanceof Error ? err.message : String(err),
+              );
         if (!opts?.append) {
           setInvoices([]);
         }
@@ -146,21 +171,27 @@ export default function SearchInvoicesCommand() {
     };
   }, [fetchInvoices]);
 
-  const loadInvoiceDetail = useCallback(async (invoiceId: string) => {
-    if (detailedById[invoiceId]) return;
-    try {
-      const client = createClientFromPreferences();
-      const detailed = await client.getInvoice(invoiceId);
-      setDetailedById((prev) => ({ ...prev, [invoiceId]: detailed }));
-    } catch (err) {
-      const message = err instanceof FrihetApiError ? err.remediation : "Could not load invoice line items.";
-      await showToast({
-        style: Toast.Style.Failure,
-        title: "Detail fetch failed",
-        message,
-      });
-    }
-  }, [detailedById]);
+  const loadInvoiceDetail = useCallback(
+    async (invoiceId: string) => {
+      if (detailedById[invoiceId]) return;
+      try {
+        const client = createClientFromPreferences();
+        const detailed = await client.getInvoice(invoiceId);
+        setDetailedById((prev) => ({ ...prev, [invoiceId]: detailed }));
+      } catch (err) {
+        const message =
+          err instanceof FrihetApiError
+            ? err.remediation
+            : "Could not load invoice line items.";
+        await showToast({
+          style: Toast.Style.Failure,
+          title: "Detail fetch failed",
+          message,
+        });
+      }
+    },
+    [detailedById],
+  );
 
   const deepLinkUrl = buildFrihetDeepLink("invoices");
   const isPartialPage = Boolean(nextCursor) || total > invoices.length;
@@ -194,7 +225,11 @@ export default function SearchInvoicesCommand() {
       {error ? (
         <List.EmptyView
           icon={{ source: Icon.ExclamationMark, tintColor: Color.Red }}
-          title={error.isAuthError ? "Authentication Required (401)" : `Unable to Load Invoices (${error.statusCode})`}
+          title={
+            error.isAuthError
+              ? "Authentication Required (401)"
+              : `Unable to Load Invoices (${error.statusCode})`
+          }
           description={error.remediation}
           actions={
             <ActionPanel>
@@ -208,7 +243,10 @@ export default function SearchInvoicesCommand() {
                 icon={Icon.RotateClockwise}
                 onAction={() => void fetchInvoices({ bypassCache: true })}
               />
-              <Action.OpenInBrowser title="Open Frihet Invoices" url={deepLinkUrl} />
+              <Action.OpenInBrowser
+                title="Open Frihet Invoices"
+                url={deepLinkUrl}
+              />
             </ActionPanel>
           }
         />
@@ -228,7 +266,10 @@ export default function SearchInvoicesCommand() {
                 icon={Icon.RotateClockwise}
                 onAction={() => void fetchInvoices({ bypassCache: true })}
               />
-              <Action.OpenInBrowser title="Open Frihet Invoices" url={deepLinkUrl} />
+              <Action.OpenInBrowser
+                title="Open Frihet Invoices"
+                url={deepLinkUrl}
+              />
             </ActionPanel>
           }
         />
@@ -246,7 +287,10 @@ export default function SearchInvoicesCommand() {
           const inv = detailedById[summaryRow.id] ?? summaryRow;
           const docNum = inv.invoiceNumber ?? inv.documentNumber ?? inv.id;
           const badge = statusBadge(inv.status);
-          const resolvedAmount = resolveDocumentAmount(inv, inv.currency ?? "EUR");
+          const resolvedAmount = resolveDocumentAmount(
+            inv,
+            inv.currency ?? "EUR",
+          );
           const amountTag =
             resolvedAmount.provenance === "unavailable"
               ? "Select to compute total"
@@ -261,32 +305,60 @@ export default function SearchInvoicesCommand() {
               subtitle={inv.clientName}
               accessories={[
                 { tag: { value: badge.value, color: badge.color } },
-                { text: amountTag, tooltip: `Amount provenance: ${resolvedAmount.formula}` },
+                {
+                  text: amountTag,
+                  tooltip: `Amount provenance: ${resolvedAmount.formula}`,
+                },
               ]}
               detail={
                 <List.Item.Detail
                   markdown={renderInvoiceMarkdown(inv)}
                   metadata={
                     <List.Item.Detail.Metadata>
-                      <List.Item.Detail.Metadata.Label title="Document Number" text={docNum} />
-                      <List.Item.Detail.Metadata.Label title="Invoice ID" text={inv.id} />
-                      <List.Item.Detail.Metadata.Label title="Client" text={inv.clientName} />
+                      <List.Item.Detail.Metadata.Label
+                        title="Document Number"
+                        text={docNum}
+                      />
+                      <List.Item.Detail.Metadata.Label
+                        title="Invoice ID"
+                        text={inv.id}
+                      />
+                      <List.Item.Detail.Metadata.Label
+                        title="Client"
+                        text={inv.clientName}
+                      />
                       <List.Item.Detail.Metadata.TagList title="Status">
-                        <List.Item.Detail.Metadata.TagList.Item text={badge.value} color={badge.color} />
+                        <List.Item.Detail.Metadata.TagList.Item
+                          text={badge.value}
+                          color={badge.color}
+                        />
                       </List.Item.Detail.Metadata.TagList>
                       <List.Item.Detail.Metadata.Separator />
-                      <List.Item.Detail.Metadata.Label title="Issue Date" text={inv.issueDate ?? "—"} />
-                      <List.Item.Detail.Metadata.Label title="Due Date" text={inv.dueDate ?? "—"} />
+                      <List.Item.Detail.Metadata.Label
+                        title="Issue Date"
+                        text={inv.issueDate ?? "—"}
+                      />
+                      <List.Item.Detail.Metadata.Label
+                        title="Due Date"
+                        text={inv.dueDate ?? "—"}
+                      />
                       <List.Item.Detail.Metadata.Label
                         title="Tax Rate"
-                        text={typeof inv.taxRate === "number" ? `${inv.taxRate}%` : "—"}
+                        text={
+                          typeof inv.taxRate === "number"
+                            ? `${inv.taxRate}%`
+                            : "—"
+                        }
                       />
                       <List.Item.Detail.Metadata.Label
                         title="Total Amount"
                         text={
                           resolvedAmount.provenance === "unavailable"
                             ? "Not on summary row"
-                            : formatCurrencyAmount(resolvedAmount.amount, resolvedAmount.currency)
+                            : formatCurrencyAmount(
+                                resolvedAmount.amount,
+                                resolvedAmount.currency,
+                              )
                         }
                       />
                       <List.Item.Detail.Metadata.Label
@@ -300,7 +372,10 @@ export default function SearchInvoicesCommand() {
               actions={
                 <ActionPanel>
                   <ActionPanel.Section title="Invoice Actions">
-                    <Action.OpenInBrowser title="Open in Frihet" url={deepLinkUrl} />
+                    <Action.OpenInBrowser
+                      title="Open in Frihet"
+                      url={deepLinkUrl}
+                    />
                     <Action.CopyToClipboard
                       title="Copy Invoice Number"
                       content={docNum}
@@ -309,7 +384,7 @@ export default function SearchInvoicesCommand() {
                     <Action.CopyToClipboard
                       title="Copy Invoice ID"
                       content={inv.id}
-                      shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
+                      shortcut={Keyboard.Shortcut.Common.Copy}
                     />
                     <Action
                       title="Load Full Line Items"
@@ -322,13 +397,18 @@ export default function SearchInvoicesCommand() {
                       <Action
                         title={`Load Next Page (${invoices.length}/${total})`}
                         icon={Icon.ArrowDown}
-                        onAction={() => void fetchInvoices({ cursor: nextCursor, append: true })}
+                        onAction={() =>
+                          void fetchInvoices({
+                            cursor: nextCursor,
+                            append: true,
+                          })
+                        }
                       />
                     ) : null}
                     <Action
                       title="Refresh & Clear Workspace Cache"
                       icon={Icon.RotateClockwise}
-                      shortcut={{ modifiers: ["cmd"], key: "r" }}
+                      shortcut={Keyboard.Shortcut.Common.Refresh}
                       onAction={() => {
                         clearActiveWorkspaceCache();
                         setDetailedById({});

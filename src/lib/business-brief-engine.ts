@@ -45,14 +45,37 @@ import type {
   QuoteRecord,
 } from "./types.js";
 
-export { formatProvenancedAmount, resolveDocumentAmount, sumProvenancedAmounts };
+export {
+  formatProvenancedAmount,
+  resolveDocumentAmount,
+  sumProvenancedAmounts,
+};
 
 export interface BriefClientPort {
-  getBusinessContext(options?: { bypassCache?: boolean; signal?: AbortSignal }): Promise<BusinessContext>;
-  listInvoices(params?: { limit?: number; bypassCache?: boolean; signal?: AbortSignal }): Promise<PaginatedResponse<InvoiceRecord>>;
-  listQuotes(params?: { limit?: number; bypassCache?: boolean; signal?: AbortSignal }): Promise<PaginatedResponse<QuoteRecord>>;
-  listExpenses(params?: { limit?: number; bypassCache?: boolean; signal?: AbortSignal }): Promise<PaginatedResponse<ExpenseRecord>>;
-  listClients(params?: { limit?: number; bypassCache?: boolean; signal?: AbortSignal }): Promise<PaginatedResponse<ClientRecord>>;
+  getBusinessContext(options?: {
+    bypassCache?: boolean;
+    signal?: AbortSignal;
+  }): Promise<BusinessContext>;
+  listInvoices(params?: {
+    limit?: number;
+    bypassCache?: boolean;
+    signal?: AbortSignal;
+  }): Promise<PaginatedResponse<InvoiceRecord>>;
+  listQuotes(params?: {
+    limit?: number;
+    bypassCache?: boolean;
+    signal?: AbortSignal;
+  }): Promise<PaginatedResponse<QuoteRecord>>;
+  listExpenses(params?: {
+    limit?: number;
+    bypassCache?: boolean;
+    signal?: AbortSignal;
+  }): Promise<PaginatedResponse<ExpenseRecord>>;
+  listClients(params?: {
+    limit?: number;
+    bypassCache?: boolean;
+    signal?: AbortSignal;
+  }): Promise<PaginatedResponse<ClientRecord>>;
   listClientActivities(
     clientId: string,
     params?: { limit?: number; bypassCache?: boolean; signal?: AbortSignal },
@@ -60,8 +83,10 @@ export interface BriefClientPort {
 }
 
 export interface ResourceCoverageItem {
-  resource: "invoices" | "quotes" | "expenses" | "clients" | "client_activities";
-  collection: "invoices" | "quotes" | "expenses" | "clients" | "client_activities";
+  resource:
+    "invoices" | "quotes" | "expenses" | "clients" | "client_activities";
+  collection:
+    "invoices" | "quotes" | "expenses" | "clients" | "client_activities";
   sourceTool: string;
   inspected: number;
   total: number;
@@ -257,7 +282,13 @@ function getDocumentNumber(doc: {
 function isInvoiceOverdue(inv: InvoiceRecord, asOfDate: string): boolean {
   const status = (inv.status ?? "").toLowerCase();
   if (status === "overdue") return true;
-  if (status !== "paid" && status !== "draft" && status !== "cancelled" && inv.dueDate && inv.dueDate < asOfDate) {
+  if (
+    status !== "paid" &&
+    status !== "draft" &&
+    status !== "cancelled" &&
+    inv.dueDate &&
+    inv.dueDate < asOfDate
+  ) {
     return true;
   }
   return false;
@@ -271,15 +302,19 @@ export async function generateOperationalBusinessBrief(
   const periodMonth = asOfDate.slice(0, 7);
   const pageLimit = options?.pageLimit ?? 25;
   const maxCrmClients = options?.maxCrmClientsToInspect ?? 5;
-  const reqOpts = { bypassCache: options?.bypassCache, signal: options?.signal };
+  const reqOpts = {
+    bypassCache: options?.bypassCache,
+    signal: options?.signal,
+  };
 
-  const [context, invoicesPage, quotesPage, expensesPage, clientsPage] = await Promise.all([
-    client.getBusinessContext(reqOpts),
-    client.listInvoices({ limit: pageLimit, ...reqOpts }),
-    client.listQuotes({ limit: pageLimit, ...reqOpts }),
-    client.listExpenses({ limit: pageLimit, ...reqOpts }),
-    client.listClients({ limit: pageLimit, ...reqOpts }),
-  ]);
+  const [context, invoicesPage, quotesPage, expensesPage, clientsPage] =
+    await Promise.all([
+      client.getBusinessContext(reqOpts),
+      client.listInvoices({ limit: pageLimit, ...reqOpts }),
+      client.listQuotes({ limit: pageLimit, ...reqOpts }),
+      client.listExpenses({ limit: pageLimit, ...reqOpts }),
+      client.listClients({ limit: pageLimit, ...reqOpts }),
+    ]);
 
   const workspaceName =
     context.business?.name ?? context.company?.name ?? "Frihet Workspace";
@@ -296,7 +331,10 @@ export async function generateOperationalBusinessBrief(
   const clientsToInspect = clientsPage.data.slice(0, maxCrmClients);
   const activitiesPerClient = await Promise.all(
     clientsToInspect.map(async (cli) => {
-      const page = await client.listClientActivities(cli.id, { limit: 5, ...reqOpts });
+      const page = await client.listClientActivities(cli.id, {
+        limit: 5,
+        ...reqOpts,
+      });
       return { client: cli, activities: page.data, total: page.total };
     }),
   );
@@ -338,7 +376,10 @@ export async function generateOperationalBusinessBrief(
     complete:
       clientsCov.complete &&
       clientsToInspect.length >= crmTotalClients &&
-      activitiesPerClient.every((entry) => entry.activities.length >= (entry.total ?? entry.activities.length)),
+      activitiesPerClient.every(
+        (entry) =>
+          entry.activities.length >= (entry.total ?? entry.activities.length),
+      ),
   };
 
   const isPartial =
@@ -357,8 +398,7 @@ export async function generateOperationalBusinessBrief(
     periodMonth,
     referenceMonth: periodMonth,
     temporalScope: "unfiltered_operational_sample_as_of_date",
-    temporalScopeNote:
-      `Las consultas list_invoices, list_quotes y list_expenses leen los registros recientes/abiertos a fecha de corte (${asOfDate}) sin filtro mensual para no ocultar impagos vencidos ni borradores de meses anteriores. La actividad específica del mes de referencia (${periodMonth}) se desglosa por separado en currentMonthActivity.`,
+    temporalScopeNote: `Las consultas list_invoices, list_quotes y list_expenses leen los registros recientes/abiertos a fecha de corte (${asOfDate}) sin filtro mensual para no ocultar impagos vencidos ni borradores de meses anteriores. La actividad específica del mes de referencia (${periodMonth}) se desglosa por separado en currentMonthActivity.`,
     isPartial,
     badgeLabel,
     resources: {
@@ -371,11 +411,31 @@ export async function generateOperationalBusinessBrief(
   };
 
   // 2. Strict Financial Separation & Canonical Amount Resolution
-  const draftInvoices: Array<{ record: InvoiceRecord; summary: BriefDocumentSummary; amount: ProvenancedAmount }> = [];
-  const issuedInvoices: Array<{ record: InvoiceRecord; summary: BriefDocumentSummary; amount: ProvenancedAmount }> = [];
-  const paidInvoices: Array<{ record: InvoiceRecord; summary: BriefDocumentSummary; amount: ProvenancedAmount }> = [];
-  const overdueInvoices: Array<{ record: InvoiceRecord; summary: BriefDocumentSummary; amount: ProvenancedAmount }> = [];
-  const onTimeOpenInvoices: Array<{ record: InvoiceRecord; summary: BriefDocumentSummary; amount: ProvenancedAmount }> = [];
+  const draftInvoices: Array<{
+    record: InvoiceRecord;
+    summary: BriefDocumentSummary;
+    amount: ProvenancedAmount;
+  }> = [];
+  const issuedInvoices: Array<{
+    record: InvoiceRecord;
+    summary: BriefDocumentSummary;
+    amount: ProvenancedAmount;
+  }> = [];
+  const paidInvoices: Array<{
+    record: InvoiceRecord;
+    summary: BriefDocumentSummary;
+    amount: ProvenancedAmount;
+  }> = [];
+  const overdueInvoices: Array<{
+    record: InvoiceRecord;
+    summary: BriefDocumentSummary;
+    amount: ProvenancedAmount;
+  }> = [];
+  const onTimeOpenInvoices: Array<{
+    record: InvoiceRecord;
+    summary: BriefDocumentSummary;
+    amount: ProvenancedAmount;
+  }> = [];
   const issuedByStatus: Record<string, number> = {};
 
   for (const inv of invoicesPage.data) {
@@ -426,29 +486,46 @@ export async function generateOperationalBusinessBrief(
         status: (q.status ?? "draft").toLowerCase(),
         counterpartyName: q.clientName || "Cliente sin nombre",
         issueDate: typeof q.issueDate === "string" ? q.issueDate : null,
-        dueDate: typeof q.validUntil === "string" ? q.validUntil : typeof q.dueDate === "string" ? q.dueDate : null,
+        dueDate:
+          typeof q.validUntil === "string"
+            ? q.validUntil
+            : typeof q.dueDate === "string"
+              ? q.dueDate
+              : null,
         amount: resolved,
       };
       return { record: q, summary, amount: resolved };
     });
 
-  const expenseAmounts = expensesPage.data.map((e) => resolveDocumentAmount(e, currency));
-  const deductibleExpenses = expensesPage.data.filter((e) => e.taxDeductible === true);
-  const nonDeductibleExpenses = expensesPage.data.filter((e) => e.taxDeductible === false);
+  const expenseAmounts = expensesPage.data.map((e) =>
+    resolveDocumentAmount(e, currency),
+  );
+  const deductibleExpenses = expensesPage.data.filter(
+    (e) => e.taxDeductible === true,
+  );
+  const nonDeductibleExpenses = expensesPage.data.filter(
+    (e) => e.taxDeductible === false,
+  );
   const incompleteExpenses = expensesPage.data.filter((e) => {
     const missingVendor = typeof e.vendor !== "string" || !e.vendor.trim();
-    const missingCategory = typeof e.category !== "string" || !e.category.trim();
+    const missingCategory =
+      typeof e.category !== "string" || !e.category.trim();
     const resolvedAmt = resolveDocumentAmount(e, currency);
-    const invalidAmount = resolvedAmt.amount === null || resolvedAmt.amount <= 0;
+    const invalidAmount =
+      resolvedAmt.amount === null || resolvedAmt.amount <= 0;
     return missingVendor || missingCategory || invalidAmount;
   });
 
   // Current month (`periodMonth`) subset explicitly filtered by document date prefix
   const issuedInvoicesInMonth = issuedInvoices.filter(
-    (entry) => typeof entry.record.issueDate === "string" && entry.record.issueDate.startsWith(periodMonth),
+    (entry) =>
+      typeof entry.record.issueDate === "string" &&
+      entry.record.issueDate.startsWith(periodMonth),
   );
   const invoiceDraftsInMonth = draftInvoices.filter(
-    (entry) => typeof entry.record.issueDate === "string" && entry.record.issueDate.startsWith(periodMonth),
+    (entry) =>
+      typeof entry.record.issueDate === "string" &&
+      entry.record.issueDate.startsWith(periodMonth),
   );
   const expensesInMonth = expensesPage.data.filter(
     (exp) => typeof exp.date === "string" && exp.date.startsWith(periodMonth),
@@ -538,7 +615,8 @@ export async function generateOperationalBusinessBrief(
     },
     outstandingBalance: {
       realOutstandingBalanceDeterminable: false,
-      unpaidNominalSemantics: "nominal_unpaid_invoice_totals_without_partial_payments",
+      unpaidNominalSemantics:
+        "nominal_unpaid_invoice_totals_without_partial_payments",
       unpaidNominalInvoicesCount: outstandingEntries.length,
       unpaidNominalTotal,
       unpaidNominalTotalsByCurrency: unpaidNominalTotal.totalsByCurrency ?? {},
@@ -584,7 +662,8 @@ export async function generateOperationalBusinessBrief(
       recordLabels: labels,
       amount: overdueSum,
       deepLink: buildFrihetDeepLink("invoices"),
-      suggestedAction: "Inspect invoice details in Search Invoices or open in Frihet to record collection or follow up with the client.",
+      suggestedAction:
+        "Inspect invoice details in Search Invoices or open in Frihet to record collection or follow up with the client.",
     });
   }
 
@@ -604,7 +683,8 @@ export async function generateOperationalBusinessBrief(
       recordLabels: labels,
       amount: draftSum,
       deepLink: buildFrihetDeepLink("invoices"),
-      suggestedAction: "Verify line items, tax treatment, and due dates in Frihet before issuing or deleting duplicate drafts.",
+      suggestedAction:
+        "Verify line items, tax treatment, and due dates in Frihet before issuing or deleting duplicate drafts.",
     });
   }
 
@@ -618,7 +698,8 @@ export async function generateOperationalBusinessBrief(
     );
     if (mismatched.length > 0) {
       const labels = mismatched.map(
-        (inv) => `${getDocumentNumber(inv)} (${inv.taxRate}% vs default ${defaultTaxRate}%)`,
+        (inv) =>
+          `${getDocumentNumber(inv)} (${inv.taxRate}% vs default ${defaultTaxRate}%)`,
       );
       reviewItems.push({
         id: "review-tax-rate-mismatch",
@@ -630,17 +711,21 @@ export async function generateOperationalBusinessBrief(
         recordIds: mismatched.map((inv) => inv.id),
         recordLabels: labels,
         deepLink: buildFrihetDeepLink("invoices"),
-        suggestedAction: "Confirm the applicable fiscal regime in Frihet before issuing.",
+        suggestedAction:
+          "Confirm the applicable fiscal regime in Frihet before issuing.",
       });
     }
   }
 
   // Incomplete expenses (missing vendor or category ONLY; taxDeductible=false is NEVER flagged as an error)
   if (incompleteExpenses.length > 0) {
-    const incAmounts = incompleteExpenses.map((e) => resolveDocumentAmount(e, currency));
+    const incAmounts = incompleteExpenses.map((e) =>
+      resolveDocumentAmount(e, currency),
+    );
     const incSum = sumProvenancedAmounts(incAmounts, currency);
     const labels = incompleteExpenses.map(
-      (e) => `${e.description || e.id} (missing ${!(e.vendor ?? "").trim() ? "vendor" : "category"})`,
+      (e) =>
+        `${e.description || e.id} (missing ${!(e.vendor ?? "").trim() ? "vendor" : "category"})`,
     );
     reviewItems.push({
       id: "review-incomplete-expenses",
@@ -653,12 +738,16 @@ export async function generateOperationalBusinessBrief(
       recordLabels: labels,
       amount: incSum,
       deepLink: buildFrihetDeepLink("expenses"),
-      suggestedAction: "Complete the missing supplier or category metadata in Frihet Expenses.",
+      suggestedAction:
+        "Complete the missing supplier or category metadata in Frihet Expenses.",
     });
   }
 
   // CRM follow-ups
-  const actionableActivities: Array<{ client: ClientRecord; activity: ClientActivityRecord }> = [];
+  const actionableActivities: Array<{
+    client: ClientRecord;
+    activity: ClientActivityRecord;
+  }> = [];
   for (const entry of activitiesPerClient) {
     for (const act of entry.activities) {
       actionableActivities.push({ client: entry.client, activity: act });
@@ -679,7 +768,8 @@ export async function generateOperationalBusinessBrief(
       recordIds: actionableActivities.map(({ activity }) => activity.id),
       recordLabels: labels,
       deepLink: buildFrihetDeepLink("clients"),
-      suggestedAction: "Inspect client history in Search Clients or open Frihet CRM.",
+      suggestedAction:
+        "Inspect client history in Search Clients or open Frihet CRM.",
     });
   }
 
@@ -694,7 +784,9 @@ export async function generateOperationalBusinessBrief(
     invUsage.limit > 0 &&
     invUsage.used / invUsage.limit >= 0.8
   ) {
-    quotaWarnings.push(`Invoices ${invUsage.used}/${invUsage.limit} (${Math.round((invUsage.used / invUsage.limit) * 100)}%)`);
+    quotaWarnings.push(
+      `Invoices ${invUsage.used}/${invUsage.limit} (${Math.round((invUsage.used / invUsage.limit) * 100)}%)`,
+    );
   }
   if (
     expUsage &&
@@ -703,7 +795,9 @@ export async function generateOperationalBusinessBrief(
     expUsage.limit > 0 &&
     expUsage.used / expUsage.limit >= 0.8
   ) {
-    quotaWarnings.push(`Expenses ${expUsage.used}/${expUsage.limit} (${Math.round((expUsage.used / expUsage.limit) * 100)}%)`);
+    quotaWarnings.push(
+      `Expenses ${expUsage.used}/${expUsage.limit} (${Math.round((expUsage.used / expUsage.limit) * 100)}%)`,
+    );
   }
   if (quotaWarnings.length > 0) {
     reviewItems.push({
@@ -729,7 +823,10 @@ export async function generateOperationalBusinessBrief(
   if (isPartial) {
     const partialLabels = Object.values(coverage.resources)
       .filter((r) => !r.complete)
-      .map((r) => `${r.collection} (${r.inspected}/${r.total} vía ${r.sourceTool})`);
+      .map(
+        (r) =>
+          `${r.collection} (${r.inspected}/${r.total} vía ${r.sourceTool})`,
+      );
     knownUnknowns.unshift(
       `Cobertura parcial del espacio de trabajo: solo se ha inspeccionado una página en ${partialLabels.join(", ")}. Los importes agregados reflejan únicamente los registros leídos en esta muestra y no el total histórico del negocio.`,
     );
@@ -773,7 +870,9 @@ export async function generateOperationalBusinessBrief(
           (item, idx) =>
             `${idx + 1}. **[${item.priority}] ${item.title}** — ${item.why}`,
         )
-      : ["- No se han detectado incidencias prioritarias en los registros inspeccionados."]),
+      : [
+          "- No se han detectado incidencias prioritarias en los registros inspeccionados.",
+        ]),
     "",
     "## 4. Lo Que No Puedo Determinar con Estos Datos",
     ...knownUnknowns.map((u) => `- ${u}`),
@@ -801,7 +900,8 @@ export async function generateOperationalBusinessBrief(
       issuedActivity: {
         note: "Incluye únicamente facturas emitidas (estado distinto de 'draft' y 'cancelled'), separando cobro registrado ('paid') del importe nominal de facturas no marcadas como pagadas ('overdue' vs en plazo). El saldo pendiente real no es determinable sin desglose de cobros parciales ni conciliación bancaria.",
         realOutstandingBalanceDeterminable: false,
-        unpaidNominalSemantics: "nominal_unpaid_invoice_totals_without_partial_payments",
+        unpaidNominalSemantics:
+          "nominal_unpaid_invoice_totals_without_partial_payments",
         issuedInvoicesCount: issuedInvoices.length,
         issuedInvoicesByStatus: issuedByStatus,
         issuedInvoicesTotal,
@@ -811,7 +911,8 @@ export async function generateOperationalBusinessBrief(
         paidInvoices: paidInvoices.map((p) => p.summary),
         unpaidNominalInvoicesCount: outstandingEntries.length,
         unpaidNominalTotal,
-        unpaidNominalTotalsByCurrency: unpaidNominalTotal.totalsByCurrency ?? {},
+        unpaidNominalTotalsByCurrency:
+          unpaidNominalTotal.totalsByCurrency ?? {},
         overdueNominalInvoicesCount: overdueInvoices.length,
         overdueNominalTotal,
         onTimeNominalPendingCount: onTimeOpenInvoices.length,

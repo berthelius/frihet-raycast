@@ -7,6 +7,7 @@ import {
   openExtensionPreferences,
   showToast,
   Toast,
+  Keyboard,
 } from "@raycast/api";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -15,12 +16,18 @@ import {
   FrihetApiError,
   isProductEffectivelyActive,
 } from "./lib/frihet-client.js";
-import { clearActiveWorkspaceCache, createClientFromPreferences } from "./lib/runtime-client.js";
+import {
+  clearActiveWorkspaceCache,
+  createClientFromPreferences,
+} from "./lib/runtime-client.js";
 import type { ProductActiveFilter, ProductRecord } from "./lib/types.js";
 
 const PAGE_LIMIT = 25;
 
-function renderProductMarkdown(product: ProductRecord, usedFallback: boolean): string {
+function renderProductMarkdown(
+  product: ProductRecord,
+  usedFallback: boolean,
+): string {
   const active = isProductEffectivelyActive(product);
   const currency = product.currency ?? "EUR";
   const statusDetail =
@@ -56,7 +63,8 @@ function renderProductMarkdown(product: ProductRecord, usedFallback: boolean): s
 
 export default function SearchProductsCommand() {
   const [searchText, setSearchText] = useState("");
-  const [activeFilter, setActiveFilter] = useState<ProductActiveFilter>("active");
+  const [activeFilter, setActiveFilter] =
+    useState<ProductActiveFilter>("active");
   const [products, setProducts] = useState<ProductRecord[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
@@ -66,7 +74,11 @@ export default function SearchProductsCommand() {
   const abortRef = useRef<AbortController | null>(null);
 
   const fetchProducts = useCallback(
-    async (opts?: { cursor?: string; append?: boolean; bypassCache?: boolean }) => {
+    async (opts?: {
+      cursor?: string;
+      append?: boolean;
+      bypassCache?: boolean;
+    }) => {
       if (abortRef.current) {
         abortRef.current.abort();
       }
@@ -86,18 +98,27 @@ export default function SearchProductsCommand() {
           signal: controller.signal,
         });
 
-        setProducts((prev) => (opts?.append ? [...prev, ...result.data] : result.data));
+        setProducts((prev) =>
+          opts?.append ? [...prev, ...result.data] : result.data,
+        );
         setTotal(result.total);
         setNextCursor(result.nextCursor);
         setUsedFallback(result.usedClientFallback);
       } catch (err) {
-        if (err instanceof FrihetApiError && err.errorCode === "request_aborted") {
+        if (
+          err instanceof FrihetApiError &&
+          err.errorCode === "request_aborted"
+        ) {
           return;
         }
         const apiErr =
           err instanceof FrihetApiError
             ? err
-            : new FrihetApiError(500, "unexpected_error", err instanceof Error ? err.message : String(err));
+            : new FrihetApiError(
+                500,
+                "unexpected_error",
+                err instanceof Error ? err.message : String(err),
+              );
         if (!opts?.append) {
           setProducts([]);
         }
@@ -137,7 +158,10 @@ export default function SearchProductsCommand() {
           value={activeFilter}
           onChange={(val) => setActiveFilter(val as ProductActiveFilter)}
         >
-          <List.Dropdown.Item title="Active Products (Incl. Legacy)" value="active" />
+          <List.Dropdown.Item
+            title="Active Products (Incl. Legacy)"
+            value="active"
+          />
           <List.Dropdown.Item title="All Products" value="all" />
           <List.Dropdown.Item title="Inactive Only" value="inactive" />
         </List.Dropdown>
@@ -146,7 +170,11 @@ export default function SearchProductsCommand() {
       {error ? (
         <List.EmptyView
           icon={{ source: Icon.ExclamationMark, tintColor: Color.Red }}
-          title={error.isAuthError ? "Authentication Required (401)" : `Unable to Load Products (${error.statusCode})`}
+          title={
+            error.isAuthError
+              ? "Authentication Required (401)"
+              : `Unable to Load Products (${error.statusCode})`
+          }
           description={error.remediation}
           actions={
             <ActionPanel>
@@ -160,7 +188,10 @@ export default function SearchProductsCommand() {
                 icon={Icon.RotateClockwise}
                 onAction={() => void fetchProducts({ bypassCache: true })}
               />
-              <Action.OpenInBrowser title="Open Frihet Products" url={deepLinkUrl} />
+              <Action.OpenInBrowser
+                title="Open Frihet Products"
+                url={deepLinkUrl}
+              />
             </ActionPanel>
           }
         />
@@ -180,7 +211,10 @@ export default function SearchProductsCommand() {
                 icon={Icon.RotateClockwise}
                 onAction={() => void fetchProducts({ bypassCache: true })}
               />
-              <Action.OpenInBrowser title="Open Frihet Products" url={deepLinkUrl} />
+              <Action.OpenInBrowser
+                title="Open Frihet Products"
+                url={deepLinkUrl}
+              />
             </ActionPanel>
           }
         />
@@ -198,7 +232,10 @@ export default function SearchProductsCommand() {
           const active = isProductEffectivelyActive(prod);
           const currency = prod.currency ?? "EUR";
           const priceFormatted = formatCurrencyAmount(prod.unitPrice, currency);
-          const taxTag = typeof prod.taxRate === "number" ? `${prod.taxRate}% tax` : "Default tax";
+          const taxTag =
+            typeof prod.taxRate === "number"
+              ? `${prod.taxRate}% tax`
+              : "Default tax";
 
           return (
             <List.Item
@@ -213,7 +250,11 @@ export default function SearchProductsCommand() {
               accessories={[
                 {
                   tag: {
-                    value: active ? (prod.isActive === undefined ? "Active (Legacy)" : "Active") : "Inactive",
+                    value: active
+                      ? prod.isActive === undefined
+                        ? "Active (Legacy)"
+                        : "Active"
+                      : "Inactive",
                     color: active ? Color.Green : Color.SecondaryText,
                   },
                 },
@@ -224,11 +265,26 @@ export default function SearchProductsCommand() {
                   markdown={renderProductMarkdown(prod, usedFallback)}
                   metadata={
                     <List.Item.Detail.Metadata>
-                      <List.Item.Detail.Metadata.Label title="Product Name" text={prod.name} />
-                      <List.Item.Detail.Metadata.Label title="Product ID" text={prod.id} />
-                      <List.Item.Detail.Metadata.Label title="SKU" text={prod.sku ?? "—"} />
-                      <List.Item.Detail.Metadata.Label title="Unit Price" text={priceFormatted} />
-                      <List.Item.Detail.Metadata.Label title="Tax Rate" text={taxTag} />
+                      <List.Item.Detail.Metadata.Label
+                        title="Product Name"
+                        text={prod.name}
+                      />
+                      <List.Item.Detail.Metadata.Label
+                        title="Product ID"
+                        text={prod.id}
+                      />
+                      <List.Item.Detail.Metadata.Label
+                        title="SKU"
+                        text={prod.sku ?? "—"}
+                      />
+                      <List.Item.Detail.Metadata.Label
+                        title="Unit Price"
+                        text={priceFormatted}
+                      />
+                      <List.Item.Detail.Metadata.Label
+                        title="Tax Rate"
+                        text={taxTag}
+                      />
                       <List.Item.Detail.Metadata.TagList title="Status">
                         <List.Item.Detail.Metadata.TagList.Item
                           text={
@@ -248,7 +304,10 @@ export default function SearchProductsCommand() {
               actions={
                 <ActionPanel>
                   <ActionPanel.Section title="Product Actions">
-                    <Action.OpenInBrowser title="Open in Frihet" url={deepLinkUrl} />
+                    <Action.OpenInBrowser
+                      title="Open in Frihet"
+                      url={deepLinkUrl}
+                    />
                     <Action.CopyToClipboard
                       title="Copy Product Name"
                       content={prod.name}
@@ -257,22 +316,30 @@ export default function SearchProductsCommand() {
                     <Action.CopyToClipboard
                       title="Copy Unit Price"
                       content={String(prod.unitPrice)}
-                      shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
+                      shortcut={Keyboard.Shortcut.Common.Copy}
                     />
-                    <Action.CopyToClipboard title="Copy Product ID" content={prod.id} />
+                    <Action.CopyToClipboard
+                      title="Copy Product ID"
+                      content={prod.id}
+                    />
                   </ActionPanel.Section>
                   <ActionPanel.Section title="Workspace & Pagination">
                     {nextCursor ? (
                       <Action
                         title={`Load Next Page (${products.length}/${total})`}
                         icon={Icon.ArrowDown}
-                        onAction={() => void fetchProducts({ cursor: nextCursor, append: true })}
+                        onAction={() =>
+                          void fetchProducts({
+                            cursor: nextCursor,
+                            append: true,
+                          })
+                        }
                       />
                     ) : null}
                     <Action
                       title="Refresh & Clear Workspace Cache"
                       icon={Icon.RotateClockwise}
-                      shortcut={{ modifiers: ["cmd"], key: "r" }}
+                      shortcut={Keyboard.Shortcut.Common.Refresh}
                       onAction={() => {
                         clearActiveWorkspaceCache();
                         void fetchProducts({ bypassCache: true });

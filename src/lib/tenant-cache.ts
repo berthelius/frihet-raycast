@@ -29,7 +29,10 @@ export function normalizeApiBaseUrl(rawUrl?: string): string {
  * Returns a 16-character hex SHA-256 fingerprint of `(baseUrl, apiKey)`.
  * Irreversible and safe to display in diagnostics (`Workspace & Cache Status`).
  */
-export function computeTenantNamespace(apiBaseUrl: string | undefined, apiKey: string): string {
+export function computeTenantNamespace(
+  apiBaseUrl: string | undefined,
+  apiKey: string,
+): string {
   const normalizedBase = normalizeApiBaseUrl(apiBaseUrl);
   const cleanKey = apiKey.trim();
   if (!cleanKey) {
@@ -72,7 +75,10 @@ export class TenantScopedCache {
    * changed since the last operation, atomically aborts all in-flight requests
    * and purges all cached entries before activating the new namespace.
    */
-  activateNamespace(namespace: string): { switched: boolean; generation: number } {
+  activateNamespace(namespace: string): {
+    switched: boolean;
+    generation: number;
+  } {
     if (this.activeNamespace !== null && this.activeNamespace !== namespace) {
       this.purgeAll("workspace_switched");
     }
@@ -105,7 +111,10 @@ export class TenantScopedCache {
    *   first (purging old tenant state).
    * - If a previous request is still running for `slotKey`, aborts it first.
    */
-  beginRequest(namespace: string, slotKey: string): {
+  beginRequest(
+    namespace: string,
+    slotKey: string,
+  ): {
     controller: AbortController;
     generation: number;
     complete: () => void;
@@ -167,9 +176,17 @@ export class TenantScopedCache {
    * cache generation. This prevents a late response from Tenant A from writing
    * after a switch to Tenant B.
    */
-  set<T>(namespace: string, key: string, value: T, expectedGeneration?: number): boolean {
+  set<T>(
+    namespace: string,
+    key: string,
+    value: T,
+    expectedGeneration?: number,
+  ): boolean {
     if (namespace === "unauthenticated") return false;
-    if (expectedGeneration !== undefined && expectedGeneration !== this.generation) {
+    if (
+      expectedGeneration !== undefined &&
+      expectedGeneration !== this.generation
+    ) {
       return false;
     }
     this.activateNamespace(namespace);
@@ -214,4 +231,3 @@ export class TenantScopedCache {
 
 export const globalTenantCache = new TenantScopedCache();
 export { TenantScopedCache as WorkspaceRegistry };
-

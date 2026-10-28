@@ -111,7 +111,11 @@ describe("Canonical Monetary & Temporal Brief Contract (Synced with Frihet-io/fr
     const brief = await generateBusinessBrief(
       {
         getBusinessContext: async () => ({
-          company: { name: "Estudio Atlántico SL", currency: "EUR", taxRegime: "iva" },
+          company: {
+            name: "Estudio Atlántico SL",
+            currency: "EUR",
+            taxRegime: "iva",
+          },
           plan: { tier: "free" },
         }),
         listInvoices: async () => ({
@@ -178,31 +182,71 @@ describe("Canonical Monetary & Temporal Brief Contract (Synced with Frihet-io/fr
           offset: 0,
         }),
         listClients: async () => ({ data: [], total: 0, limit: 20, offset: 0 }),
-        listClientActivities: async () => ({ data: [], total: 0, limit: 10, offset: 0 }),
+        listClientActivities: async () => ({
+          data: [],
+          total: 0,
+          limit: 10,
+          offset: 0,
+        }),
       },
       { asOfDate: "2026-10-28" },
     );
 
-    assert.equal(brief.coverage.temporalScope, "unfiltered_operational_sample_as_of_date");
+    assert.equal(
+      brief.coverage.temporalScope,
+      "unfiltered_operational_sample_as_of_date",
+    );
     assert.equal(brief.coverage.referenceMonth, "2026-10");
-    assert.equal(brief.activitySeparation.issuedActivity.realOutstandingBalanceDeterminable, false);
+    assert.equal(
+      brief.activitySeparation.issuedActivity
+        .realOutstandingBalanceDeterminable,
+      false,
+    );
     assert.equal(
       brief.activitySeparation.issuedActivity.unpaidNominalSemantics,
       "nominal_unpaid_invoice_totals_without_partial_payments",
     );
-    assert.equal(brief.activitySeparation.issuedActivity.unpaidNominalTotal.amount, 1452);
-    assert.equal(brief.activitySeparation.issuedActivity.unpaidNominalTotalsByCurrency.EUR?.amount, 1452);
+    assert.equal(
+      brief.activitySeparation.issuedActivity.unpaidNominalTotal.amount,
+      1452,
+    );
+    assert.equal(
+      brief.activitySeparation.issuedActivity.unpaidNominalTotalsByCurrency.EUR
+        ?.amount,
+      1452,
+    );
 
     // Operational sample (1952 EUR across 3 issued invoices) vs October subset (1347 EUR across 2 October issued invoices)
-    assert.equal(brief.activitySeparation.issuedActivity.issuedInvoicesTotal.amount, 1952);
-    assert.equal(brief.activitySeparation.currentMonthActivity.referenceMonth, "2026-10");
-    assert.equal(brief.activitySeparation.currentMonthActivity.issuedInvoicesInMonthCount, 2);
-    assert.equal(brief.activitySeparation.currentMonthActivity.issuedInvoicesInMonthTotal.amount, 1347);
-    assert.equal(brief.activitySeparation.currentMonthActivity.expensesInMonthCount, 1);
-    assert.equal(brief.activitySeparation.currentMonthActivity.expensesInMonthTotal.amount, 121);
+    assert.equal(
+      brief.activitySeparation.issuedActivity.issuedInvoicesTotal.amount,
+      1952,
+    );
+    assert.equal(
+      brief.activitySeparation.currentMonthActivity.referenceMonth,
+      "2026-10",
+    );
+    assert.equal(
+      brief.activitySeparation.currentMonthActivity.issuedInvoicesInMonthCount,
+      2,
+    );
+    assert.equal(
+      brief.activitySeparation.currentMonthActivity.issuedInvoicesInMonthTotal
+        .amount,
+      1347,
+    );
+    assert.equal(
+      brief.activitySeparation.currentMonthActivity.expensesInMonthCount,
+      1,
+    );
+    assert.equal(
+      brief.activitySeparation.currentMonthActivity.expensesInMonthTotal.amount,
+      121,
+    );
 
     assert.ok(
-      brief.markdown.includes("Corte operativo a 2026-10-28 · Muestra abierta/reciente sin filtro mensual"),
+      brief.markdown.includes(
+        "Corte operativo a 2026-10-28 · Muestra abierta/reciente sin filtro mensual",
+      ),
     );
     assert.ok(
       brief.markdown.includes(

@@ -7,6 +7,7 @@ import {
   openExtensionPreferences,
   showToast,
   Toast,
+  Keyboard,
 } from "@raycast/api";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -20,7 +21,10 @@ import {
   formatCurrencyAmount,
   FrihetApiError,
 } from "./lib/frihet-client.js";
-import { clearActiveWorkspaceCache, createClientFromPreferences } from "./lib/runtime-client.js";
+import {
+  clearActiveWorkspaceCache,
+  createClientFromPreferences,
+} from "./lib/runtime-client.js";
 
 function priorityColor(level: ReviewPriorityLevel): Color {
   switch (level) {
@@ -57,7 +61,10 @@ function renderSummaryMarkdown(brief: OperationalBusinessBrief): string {
   ].join("\n");
 }
 
-function renderReviewItemMarkdown(item: BriefReviewItem, brief: OperationalBusinessBrief): string {
+function renderReviewItemMarkdown(
+  item: BriefReviewItem,
+  brief: OperationalBusinessBrief,
+): string {
   const lines: string[] = [
     `# [${item.priority}] ${item.title}`,
     "",
@@ -71,7 +78,9 @@ function renderReviewItemMarkdown(item: BriefReviewItem, brief: OperationalBusin
         ]
       : []),
     "## Source Records",
-    ...item.recordLabels.map((label, idx) => `- \`${item.recordIds[idx] ?? "—"}\` — ${label}`),
+    ...item.recordLabels.map(
+      (label, idx) => `- \`${item.recordIds[idx] ?? "—"}\` — ${label}`,
+    ),
     "",
     "## Suggested Next Step (Read-Only — Never Auto-Executed)",
     item.suggestedAction,
@@ -105,13 +114,20 @@ export default function BusinessBriefCommand() {
       });
       setBrief(result);
     } catch (err) {
-      if (err instanceof FrihetApiError && err.errorCode === "request_aborted") {
+      if (
+        err instanceof FrihetApiError &&
+        err.errorCode === "request_aborted"
+      ) {
         return;
       }
       const apiErr =
         err instanceof FrihetApiError
           ? err
-          : new FrihetApiError(500, "unexpected_error", err instanceof Error ? err.message : String(err));
+          : new FrihetApiError(
+              500,
+              "unexpected_error",
+              err instanceof Error ? err.message : String(err),
+            );
       setBrief(null);
       setError(apiErr);
       await showToast({
@@ -160,7 +176,10 @@ export default function BusinessBriefCommand() {
                 icon={Icon.RotateClockwise}
                 onAction={() => void loadBrief({ bypassCache: true })}
               />
-              <Action.OpenInBrowser title="Open Frihet Dashboard" url={dashboardUrl} />
+              <Action.OpenInBrowser
+                title="Open Frihet Dashboard"
+                url={dashboardUrl}
+              />
             </ActionPanel>
           }
         />
@@ -176,7 +195,10 @@ export default function BusinessBriefCommand() {
               <List.Item
                 key={item.id}
                 id={item.id}
-                icon={{ source: Icon.CheckCircle, tintColor: priorityColor(item.priority) }}
+                icon={{
+                  source: Icon.CheckCircle,
+                  tintColor: priorityColor(item.priority),
+                }}
                 title={item.title}
                 subtitle={item.subtitle}
                 accessories={[
@@ -188,8 +210,12 @@ export default function BusinessBriefCommand() {
                   },
                   {
                     tag: {
-                      value: brief.coverage.isPartial ? "Partial Sample" : "Complete",
-                      color: brief.coverage.isPartial ? Color.Orange : Color.Green,
+                      value: brief.coverage.isPartial
+                        ? "Partial Sample"
+                        : "Complete",
+                      color: brief.coverage.isPartial
+                        ? Color.Orange
+                        : Color.Green,
                     },
                   },
                 ]}
@@ -208,8 +234,16 @@ export default function BusinessBriefCommand() {
                             color={priorityColor(item.priority)}
                           />
                           <List.Item.Detail.Metadata.TagList.Item
-                            text={brief.coverage.isPartial ? "Partial Sample" : "Complete Coverage"}
-                            color={brief.coverage.isPartial ? Color.Orange : Color.Green}
+                            text={
+                              brief.coverage.isPartial
+                                ? "Partial Sample"
+                                : "Complete Coverage"
+                            }
+                            color={
+                              brief.coverage.isPartial
+                                ? Color.Orange
+                                : Color.Green
+                            }
                           />
                         </List.Item.Detail.Metadata.TagList>
                         <List.Item.Detail.Metadata.Label
@@ -228,7 +262,10 @@ export default function BusinessBriefCommand() {
                 }
                 actions={
                   <ActionPanel>
-                    <Action.OpenInBrowser title="Open Section in Frihet" url={item.deepLink} />
+                    <Action.OpenInBrowser
+                      title="Open Section in Frihet"
+                      url={item.deepLink}
+                    />
                     <Action.CopyToClipboard
                       title="Copy Source Record IDs"
                       content={item.recordIds.join(", ")}
@@ -237,7 +274,7 @@ export default function BusinessBriefCommand() {
                     <Action
                       title="Refresh & Clear Workspace Cache"
                       icon={Icon.RotateClockwise}
-                      shortcut={{ modifiers: ["cmd"], key: "r" }}
+                      shortcut={Keyboard.Shortcut.Common.Refresh}
                       onAction={() => {
                         clearActiveWorkspaceCache();
                         void loadBrief({ bypassCache: true });
@@ -266,19 +303,28 @@ export default function BusinessBriefCommand() {
               accessories={[
                 {
                   tag: {
-                    value: brief.coverage.isPartial ? "Partial Sample" : "Complete Coverage",
-                    color: brief.coverage.isPartial ? Color.Orange : Color.Green,
+                    value: brief.coverage.isPartial
+                      ? "Partial Sample"
+                      : "Complete Coverage",
+                    color: brief.coverage.isPartial
+                      ? Color.Orange
+                      : Color.Green,
                   },
                 },
               ]}
-              detail={<List.Item.Detail markdown={renderSummaryMarkdown(brief)} />}
+              detail={
+                <List.Item.Detail markdown={renderSummaryMarkdown(brief)} />
+              }
               actions={
                 <ActionPanel>
-                  <Action.OpenInBrowser title="Open Frihet Dashboard" url={dashboardUrl} />
+                  <Action.OpenInBrowser
+                    title="Open Frihet Dashboard"
+                    url={dashboardUrl}
+                  />
                   <Action
                     title="Refresh & Clear Workspace Cache"
                     icon={Icon.RotateClockwise}
-                    shortcut={{ modifiers: ["cmd"], key: "r" }}
+                    shortcut={Keyboard.Shortcut.Common.Refresh}
                     onAction={() => {
                       clearActiveWorkspaceCache();
                       void loadBrief({ bypassCache: true });
